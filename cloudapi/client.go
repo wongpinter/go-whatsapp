@@ -193,6 +193,35 @@ func (c *Client) SendInteractiveButtons(ctx context.Context, to, bodyText string
 	return c.Send(ctx, msg)
 }
 
+// SendFlow is a convenience method for sending Flow interactive messages.
+func (c *Client) SendFlow(ctx context.Context, to, bodyText, flowID, flowToken, flowCTA string) (*SendMessageResponse, error) {
+	msg := NewInteractiveFlowMessage(to, bodyText).
+		WithFlowID(flowID).
+		WithFlowToken(flowToken).
+		WithFlowCTA(flowCTA)
+	return c.Send(ctx, msg)
+}
+
+// SendFlowWithScreen is a convenience method for sending Flow messages with initial screen.
+func (c *Client) SendFlowWithScreen(ctx context.Context, to, bodyText, flowID, flowToken, flowCTA, screen string) (*SendMessageResponse, error) {
+	msg := NewInteractiveFlowMessage(to, bodyText).
+		WithFlowID(flowID).
+		WithFlowToken(flowToken).
+		WithFlowCTA(flowCTA).
+		WithFlowScreen(screen)
+	return c.Send(ctx, msg)
+}
+
+// SendFlowWithData is a convenience method for sending Flow messages with initial data.
+func (c *Client) SendFlowWithData(ctx context.Context, to, bodyText, flowID, flowToken, flowCTA string, data map[string]interface{}) (*SendMessageResponse, error) {
+	msg := NewInteractiveFlowMessage(to, bodyText).
+		WithFlowID(flowID).
+		WithFlowToken(flowToken).
+		WithFlowCTA(flowCTA).
+		WithFlowData(data)
+	return c.Send(ctx, msg)
+}
+
 // SendInteractiveList is a convenience method for sending interactive list messages.
 func (c *Client) SendInteractiveList(ctx context.Context, to, bodyText, buttonText string, rows []Row) (*SendMessageResponse, error) {
 	msg := NewInteractiveListMessage(to, bodyText, buttonText)

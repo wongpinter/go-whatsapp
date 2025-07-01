@@ -181,6 +181,13 @@ type Interactive struct {
 	Type        string       `json:"type"`
 	ButtonReply *ButtonReply `json:"button_reply,omitempty"`
 	ListReply   *ListReply   `json:"list_reply,omitempty"`
+	FlowReply   *FlowReply   `json:"flow_reply,omitempty"`
+}
+
+// FlowReply represents a Flow completion reply.
+type FlowReply struct {
+	FlowToken string                 `json:"flow_token"`
+	Response  map[string]interface{} `json:"response"`
 }
 
 // ButtonReply represents a button reply.
@@ -289,6 +296,7 @@ const (
 	EventTypeContactMessage  EventType = "message.contact"
 	EventTypeButtonReply     EventType = "interactive.button_reply"
 	EventTypeListReply       EventType = "interactive.list_reply"
+	EventTypeFlowReply       EventType = "interactive.flow_reply"
 	EventTypeOrderMessage    EventType = "message.order"
 	EventTypeSystemMessage   EventType = "message.system"
 	EventTypeStatusUpdate    EventType = "status.update"
@@ -323,6 +331,8 @@ func (m *Message) GetEventType() EventType {
 				return EventTypeButtonReply
 			case "list_reply":
 				return EventTypeListReply
+			case "flow_reply":
+				return EventTypeFlowReply
 			}
 		}
 	case "order":

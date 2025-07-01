@@ -550,6 +550,92 @@ func (i *InteractiveMessage) AddRow(id, title, description string) *InteractiveM
 	return i
 }
 
+// FlowAction represents the action for Flow interactive messages.
+type FlowAction struct {
+	Name       string               `json:"name"`
+	Parameters FlowActionParameters `json:"parameters"`
+}
+
+// FlowActionParameters represents parameters for Flow actions.
+type FlowActionParameters struct {
+	FlowID            string                 `json:"flow_id"`
+	FlowToken         string                 `json:"flow_token"`
+	FlowAction        string                 `json:"flow_action"`
+	FlowActionPayload map[string]interface{} `json:"flow_action_payload,omitempty"`
+	FlowCTA           string                 `json:"flow_cta,omitempty"`
+}
+
+// NewInteractiveFlowMessage creates a new interactive message with Flow action.
+func NewInteractiveFlowMessage(to, bodyText string) *InteractiveMessage {
+	msg := &InteractiveMessage{}
+	msg.MessagingProduct = "whatsapp"
+	msg.RecipientType = "individual"
+	msg.To = to
+	msg.Interactive.Type = "flow"
+	msg.Interactive.Body.Text = bodyText
+	msg.Interactive.Action = &FlowAction{
+		Name: "flow",
+		Parameters: FlowActionParameters{
+			FlowAction: "navigate",
+		},
+	}
+	return msg
+}
+
+// WithFlowID sets the Flow ID for the Flow message.
+func (i *InteractiveMessage) WithFlowID(flowID string) *InteractiveMessage {
+	if action, ok := i.Interactive.Action.(*FlowAction); ok {
+		action.Parameters.FlowID = flowID
+	}
+	return i
+}
+
+// WithFlowToken sets the Flow token for the Flow message.
+func (i *InteractiveMessage) WithFlowToken(flowToken string) *InteractiveMessage {
+	if action, ok := i.Interactive.Action.(*FlowAction); ok {
+		action.Parameters.FlowToken = flowToken
+	}
+	return i
+}
+
+// WithFlowCTA sets the call-to-action text for the Flow message.
+func (i *InteractiveMessage) WithFlowCTA(cta string) *InteractiveMessage {
+	if action, ok := i.Interactive.Action.(*FlowAction); ok {
+		action.Parameters.FlowCTA = cta
+	}
+	return i
+}
+
+// WithFlowActionPayload sets the action payload for the Flow message.
+func (i *InteractiveMessage) WithFlowActionPayload(payload map[string]interface{}) *InteractiveMessage {
+	if action, ok := i.Interactive.Action.(*FlowAction); ok {
+		action.Parameters.FlowActionPayload = payload
+	}
+	return i
+}
+
+// WithFlowScreen sets the initial screen for the Flow message.
+func (i *InteractiveMessage) WithFlowScreen(screen string) *InteractiveMessage {
+	if action, ok := i.Interactive.Action.(*FlowAction); ok {
+		if action.Parameters.FlowActionPayload == nil {
+			action.Parameters.FlowActionPayload = make(map[string]interface{})
+		}
+		action.Parameters.FlowActionPayload["screen"] = screen
+	}
+	return i
+}
+
+// WithFlowData sets initial data for the Flow message.
+func (i *InteractiveMessage) WithFlowData(data map[string]interface{}) *InteractiveMessage {
+	if action, ok := i.Interactive.Action.(*FlowAction); ok {
+		if action.Parameters.FlowActionPayload == nil {
+			action.Parameters.FlowActionPayload = make(map[string]interface{})
+		}
+		action.Parameters.FlowActionPayload["data"] = data
+	}
+	return i
+}
+
 // LocationMessage represents a location message.
 type LocationMessage struct {
 	MessageBase

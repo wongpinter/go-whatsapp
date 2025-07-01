@@ -62,6 +62,11 @@ type ListReplyHandler interface {
 	OnListReply(ctx context.Context, msg *Message, metadata *Metadata) error
 }
 
+// FlowReplyHandler defines the interface for handling Flow replies.
+type FlowReplyHandler interface {
+	OnFlowReply(ctx context.Context, msg *Message, metadata *Metadata) error
+}
+
 // OrderMessageHandler defines the interface for handling order messages.
 type OrderMessageHandler interface {
 	OnOrderMessage(ctx context.Context, msg *Message, metadata *Metadata) error
@@ -100,6 +105,7 @@ type EventDispatcher struct {
 	contactHandler     ContactMessageHandler
 	buttonReplyHandler ButtonReplyHandler
 	listReplyHandler   ListReplyHandler
+	flowReplyHandler   FlowReplyHandler
 	orderHandler       OrderMessageHandler
 	systemHandler      SystemMessageHandler
 	statusHandler      StatusUpdateHandler
@@ -156,6 +162,10 @@ func (d *EventDispatcher) RegisterButtonReplyHandler(h ButtonReplyHandler) {
 
 func (d *EventDispatcher) RegisterListReplyHandler(h ListReplyHandler) {
 	d.listReplyHandler = h
+}
+
+func (d *EventDispatcher) RegisterFlowReplyHandler(h FlowReplyHandler) {
+	d.flowReplyHandler = h
 }
 
 func (d *EventDispatcher) RegisterOrderMessageHandler(h OrderMessageHandler) {
@@ -228,6 +238,10 @@ func (d *EventDispatcher) DispatchMessage(ctx context.Context, msg *Message, met
 				if d.listReplyHandler != nil {
 					return d.listReplyHandler.OnListReply(ctx, msg, metadata)
 				}
+			case "flow_reply":
+				if d.flowReplyHandler != nil {
+					return d.flowReplyHandler.OnFlowReply(ctx, msg, metadata)
+				}
 			}
 		}
 	case "order":
@@ -288,7 +302,7 @@ func (d *EventDispatcher) HasHandler(messageType string) bool {
 	case "contacts":
 		return d.contactHandler != nil
 	case "interactive":
-		return d.buttonReplyHandler != nil || d.listReplyHandler != nil
+		return d.buttonReplyHandler != nil || d.listReplyHandler != nil || d.flowReplyHandler != nil
 	case "order":
 		return d.orderHandler != nil
 	case "system":
@@ -334,6 +348,9 @@ func (d *EventDispatcher) GetRegisteredHandlers() []string {
 	}
 	if d.listReplyHandler != nil {
 		handlers = append(handlers, "list_reply")
+	}
+	if d.flowReplyHandler != nil {
+		handlers = append(handlers, "flow_reply")
 	}
 	if d.orderHandler != nil {
 		handlers = append(handlers, "order")

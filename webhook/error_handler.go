@@ -95,7 +95,7 @@ func (e *StatusError) Error() string {
 }
 
 // handleVerificationError handles webhook verification errors
-func (eh *WebhookErrorHandler) handleVerificationError(ctx context.Context, err *VerificationError) error {
+func (eh *WebhookErrorHandler) handleVerificationError(_ context.Context, err *VerificationError) error {
 	eh.logger.Error().
 		Str("error_code", err.Code).
 		Str("error_message", err.Message).
@@ -106,7 +106,7 @@ func (eh *WebhookErrorHandler) handleVerificationError(ctx context.Context, err 
 }
 
 // handleMessageError handles message processing errors
-func (eh *WebhookErrorHandler) handleMessageError(ctx context.Context, err *MessageError, payload *WebhookPayload) error {
+func (eh *WebhookErrorHandler) handleMessageError(_ context.Context, err *MessageError, _ *WebhookPayload) error {
 	eh.logger.Error().
 		Str("message_id", err.MessageID).
 		Int("error_code", err.ErrorCode).
@@ -133,7 +133,7 @@ func (eh *WebhookErrorHandler) handleMessageError(ctx context.Context, err *Mess
 }
 
 // handleStatusError handles status processing errors
-func (eh *WebhookErrorHandler) handleStatusError(ctx context.Context, err *StatusError, payload *WebhookPayload) error {
+func (eh *WebhookErrorHandler) handleStatusError(_ context.Context, err *StatusError, _ *WebhookPayload) error {
 	eh.logger.Error().
 		Str("message_id", err.MessageID).
 		Str("status", err.Status).
@@ -150,7 +150,7 @@ func (eh *WebhookErrorHandler) handleStatusError(ctx context.Context, err *Statu
 }
 
 // handleGenericError handles generic errors
-func (eh *WebhookErrorHandler) handleGenericError(ctx context.Context, err error, payload *WebhookPayload) error {
+func (eh *WebhookErrorHandler) handleGenericError(_ context.Context, err error, _ *WebhookPayload) error {
 	eh.logger.Error().
 		Err(err).
 		Msg("Generic webhook processing error")

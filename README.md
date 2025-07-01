@@ -110,7 +110,7 @@ github.com/wongpinter/go-whatsapp/
 ├── cloudapi/          # Message sending functionality
 ├── webhook/           # Webhook handling and event processing
 ├── bm/               # Business Management API
-├── flows/            # WhatsApp Flows (coming soon)
+├── flows/            # WhatsApp Flows builder and management
 ├── internal/         # Internal shared components
 └── examples/         # Usage examples
 ```
@@ -215,6 +215,80 @@ statusCounts := metrics["status_counts"].(map[string]uint64)
 * Message status updates (sent, delivered, read, failed) with pricing info
 * Error notifications with detailed error codes
 * System messages
+
+### Flows Package
+
+The `flows` package provides comprehensive WhatsApp Flows support with a fluent builder API:
+
+```go
+import "github.com/wongpinter/go-whatsapp/flows"
+
+// Create a survey Flow using the builder API
+flow := flows.NewFlow().
+    WithRouting("START", "QUESTIONS", "END").
+    AddScreen(
+        flows.NewScreen("START").
+            WithTitle("Customer Survey").
+            AddComponent(flows.NewTextHeading("Welcome to our survey!")).
+            AddComponent(flows.NewTextBody("Help us improve our service.")).
+            AddComponent(flows.NewFooter("Start Survey")).
+            Build(),
+    ).
+    AddScreen(
+        flows.NewScreen("QUESTIONS").
+            WithTitle("Survey Questions").
+            AddComponent(flows.NewTextInput("name", "Your Name").AsRequired()).
+            AddComponent(flows.NewEmailInput("email", "Email Address").AsRequired()).
+            AddComponent(flows.NewRadioButtonsGroup("satisfaction", "How satisfied are you?").
+                AddOption("very_satisfied", "Very Satisfied").
+                AddOption("satisfied", "Satisfied").
+                AddOption("neutral", "Neutral").
+                AsRequired().
+                Build()).
+            AddComponent(flows.NewDataExchangeFooter("Submit", map[string]interface{}{
+                "action": "submit_survey",
+            })).
+            Build(),
+    ).
+    AddScreen(
+        flows.NewScreen("END").
+            AsTerminal().
+            AsSuccess().
+            AddComponent(flows.NewTextHeading("Thank you!")).
+            AddComponent(flows.NewCompleteFooter("Close")).
+            Build(),
+    ).
+    Build()
+
+// Create and upload Flow to WhatsApp
+flowClient := flows.NewClient(wabaID, accessToken)
+flowID, err := flowClient.CreateAndUploadFlow(ctx, &flows.CreateFlowRequest{
+    Name:       "Customer Survey",
+    Categories: []string{flows.CategorySurvey},
+}, flow)
+
+// Send Flow message to user
+cloudClient := cloudapi.NewClient(phoneNumberID, accessToken)
+flowToken, _ := flows.GenerateFlowToken(flowID, userID, nil)
+cloudClient.SendFlow(ctx, userPhoneNumber, "Please take our survey", flowID, flowToken, "Take Survey")
+```
+
+**Key Features:**
+* **Fluent Builder API**: Intuitive Flow construction with method chaining
+* **Complete Flow JSON Support**: Full WhatsApp Flow JSON schema implementation
+* **Flow Management**: Create, update, publish, and manage Flows via Graph API
+* **Data Exchange Handling**: Built-in support for dynamic Flow interactions
+* **Flow Token Management**: Secure token generation and validation
+* **Webhook Integration**: Automatic Flow completion event handling
+* **Validation Framework**: Comprehensive Flow validation with detailed error reporting
+
+**Supported Components:**
+* Text components (heading, body, caption)
+* Input components (text, email, number, phone, textarea)
+* Selection components (radio buttons, checkboxes, dropdown)
+* Interactive components (buttons, footers, opt-in)
+* Media components (images, embedded links)
+* Date picker and other specialized components
 
 ### Business Management Package
 
