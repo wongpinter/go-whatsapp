@@ -264,6 +264,725 @@ type TemplateListParams struct {
 	Before   string `json:"before,omitempty"`
 }
 
+// Analytics Types
+
+// CostAnalytics represents cost analytics data.
+type CostAnalytics struct {
+	MessageCosts      []MessageCostData      `json:"message_costs,omitempty"`
+	ConversationCosts []ConversationCostData `json:"conversation_costs,omitempty"`
+	TemplateCosts     []TemplateCostData     `json:"template_costs,omitempty"`
+	TotalCost         CostSummary            `json:"total_cost"`
+	Period            AnalyticsPeriod        `json:"period"`
+}
+
+// MessageCostData represents cost data for individual messages.
+type MessageCostData struct {
+	Date        string  `json:"date"`
+	MessageType string  `json:"message_type"`
+	Count       int64   `json:"count"`
+	Cost        float64 `json:"cost"`
+	Currency    string  `json:"currency"`
+	Destination string  `json:"destination,omitempty"`
+}
+
+// ConversationCostData represents cost data for conversations.
+type ConversationCostData struct {
+	Date                  string  `json:"date"`
+	BusinessInitiated     int64   `json:"business_initiated"`
+	UserInitiated         int64   `json:"user_initiated"`
+	BusinessInitiatedCost float64 `json:"business_initiated_cost"`
+	UserInitiatedCost     float64 `json:"user_initiated_cost"`
+	TotalConversations    int64   `json:"total_conversations"`
+	TotalCost             float64 `json:"total_cost"`
+	Currency              string  `json:"currency"`
+}
+
+// TemplateCostData represents cost data for template usage.
+type TemplateCostData struct {
+	Date         string  `json:"date"`
+	TemplateName string  `json:"template_name"`
+	TemplateID   string  `json:"template_id"`
+	Category     string  `json:"category"`
+	Count        int64   `json:"count"`
+	Cost         float64 `json:"cost"`
+	Currency     string  `json:"currency"`
+	SuccessRate  float64 `json:"success_rate"`
+}
+
+// CostSummary represents a summary of costs.
+type CostSummary struct {
+	TotalCost    float64 `json:"total_cost"`
+	Currency     string  `json:"currency"`
+	MessageCost  float64 `json:"message_cost"`
+	TemplateCost float64 `json:"template_cost"`
+	Period       string  `json:"period"`
+}
+
+// AnalyticsPeriod represents the time period for analytics.
+type AnalyticsPeriod struct {
+	Start       string `json:"start"`
+	End         string `json:"end"`
+	Granularity string `json:"granularity"` // HOURLY, DAILY, MONTHLY
+}
+
+// AccountQualityMetrics represents account quality and health metrics.
+type AccountQualityMetrics struct {
+	QualityScore     QualityScore     `json:"quality_score"`
+	DeliveryMetrics  DeliveryMetrics  `json:"delivery_metrics"`
+	ComplianceStatus ComplianceStatus `json:"compliance_status"`
+	Period           AnalyticsPeriod  `json:"period"`
+}
+
+// QualityScore represents the account quality score.
+type QualityScore struct {
+	Current         string                  `json:"current"` // GREEN, YELLOW, RED
+	Previous        string                  `json:"previous"`
+	Trend           string                  `json:"trend"` // IMPROVING, STABLE, DECLINING
+	LastUpdate      time.Time               `json:"last_update"`
+	Factors         []QualityFactor         `json:"factors,omitempty"`
+	History         []QualityScoreHistory   `json:"history,omitempty"`
+	Recommendations []QualityRecommendation `json:"recommendations,omitempty"`
+	Score           float64                 `json:"score,omitempty"` // Numeric score 0-100
+	Threshold       QualityThresholds       `json:"threshold"`
+}
+
+// QualityFactor represents factors affecting quality score.
+type QualityFactor struct {
+	Factor      string  `json:"factor"`
+	Impact      string  `json:"impact"` // HIGH, MEDIUM, LOW
+	Description string  `json:"description"`
+	Value       float64 `json:"value,omitempty"`
+}
+
+// QualityScoreHistory represents historical quality score data.
+type QualityScoreHistory struct {
+	Date   string         `json:"date"`
+	Score  string         `json:"score"` // GREEN, YELLOW, RED
+	Value  float64        `json:"value"` // Numeric score 0-100
+	Events []QualityEvent `json:"events,omitempty"`
+}
+
+// QualityEvent represents events that affected quality score.
+type QualityEvent struct {
+	Type        string    `json:"type"`
+	Description string    `json:"description"`
+	Impact      string    `json:"impact"` // POSITIVE, NEGATIVE, NEUTRAL
+	Timestamp   time.Time `json:"timestamp"`
+}
+
+// QualityRecommendation represents improvement recommendations.
+type QualityRecommendation struct {
+	Category    string `json:"category"`
+	Priority    string `json:"priority"` // HIGH, MEDIUM, LOW
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Action      string `json:"action"`
+	Impact      string `json:"impact"`   // Expected improvement
+	Effort      string `json:"effort"`   // Implementation effort
+	Timeline    string `json:"timeline"` // Expected timeline
+}
+
+// QualityThresholds represents quality score thresholds.
+type QualityThresholds struct {
+	Green  QualityThreshold `json:"green"`
+	Yellow QualityThreshold `json:"yellow"`
+	Red    QualityThreshold `json:"red"`
+}
+
+// QualityThreshold represents a quality threshold.
+type QualityThreshold struct {
+	Min         float64 `json:"min"`
+	Max         float64 `json:"max"`
+	Description string  `json:"description"`
+}
+
+// DeliveryMetrics represents message delivery performance.
+type DeliveryMetrics struct {
+	TotalMessages    int64                    `json:"total_messages"`
+	DeliveredCount   int64                    `json:"delivered_count"`
+	FailedCount      int64                    `json:"failed_count"`
+	DeliveryRate     float64                  `json:"delivery_rate"`
+	FailureRate      float64                  `json:"failure_rate"`
+	AverageLatency   float64                  `json:"average_latency_ms"`
+	FailureReasons   []FailureReason          `json:"failure_reasons,omitempty"`
+	DeliveryTrends   []DeliveryTrend          `json:"delivery_trends,omitempty"`
+	PerformanceGoals DeliveryPerformanceGoals `json:"performance_goals"`
+	Benchmarks       DeliveryBenchmarks       `json:"benchmarks"`
+}
+
+// FailureReason represents reasons for message delivery failures.
+type FailureReason struct {
+	Reason          string                  `json:"reason"`
+	Count           int64                   `json:"count"`
+	Percentage      float64                 `json:"percentage"`
+	Description     string                  `json:"description,omitempty"`
+	ErrorCode       string                  `json:"error_code,omitempty"`
+	Severity        string                  `json:"severity"` // HIGH, MEDIUM, LOW
+	Category        string                  `json:"category"` // TECHNICAL, POLICY, USER_ERROR
+	Trend           string                  `json:"trend"`    // INCREASING, STABLE, DECREASING
+	Recommendations []FailureRecommendation `json:"recommendations,omitempty"`
+	FirstOccurred   time.Time               `json:"first_occurred"`
+	LastOccurred    time.Time               `json:"last_occurred"`
+}
+
+// FailureRecommendation represents recommendations for addressing failures.
+type FailureRecommendation struct {
+	Action      string `json:"action"`
+	Priority    string `json:"priority"` // HIGH, MEDIUM, LOW
+	Impact      string `json:"impact"`   // Expected reduction in failure rate
+	Effort      string `json:"effort"`   // Implementation effort
+	Timeline    string `json:"timeline"` // Expected timeline
+	Description string `json:"description"`
+}
+
+// DeliveryTrend represents delivery performance trends over time.
+type DeliveryTrend struct {
+	Date         string  `json:"date"`
+	DeliveryRate float64 `json:"delivery_rate"`
+	FailureRate  float64 `json:"failure_rate"`
+	Volume       int64   `json:"volume"`
+	Latency      float64 `json:"latency_ms"`
+}
+
+// DeliveryPerformanceGoals represents delivery performance targets.
+type DeliveryPerformanceGoals struct {
+	TargetDeliveryRate float64         `json:"target_delivery_rate"`
+	MaxFailureRate     float64         `json:"max_failure_rate"`
+	MaxLatency         float64         `json:"max_latency_ms"`
+	MinVolume          int64           `json:"min_volume"`
+	Achievement        GoalAchievement `json:"achievement"`
+}
+
+// GoalAchievement represents goal achievement status.
+type GoalAchievement struct {
+	DeliveryRateAchieved bool    `json:"delivery_rate_achieved"`
+	FailureRateAchieved  bool    `json:"failure_rate_achieved"`
+	LatencyAchieved      bool    `json:"latency_achieved"`
+	VolumeAchieved       bool    `json:"volume_achieved"`
+	OverallScore         float64 `json:"overall_score"` // 0-100
+}
+
+// DeliveryBenchmarks represents industry benchmarks.
+type DeliveryBenchmarks struct {
+	IndustryAverage    BenchmarkData `json:"industry_average"`
+	TopPerformers      BenchmarkData `json:"top_performers"`
+	YourPerformance    BenchmarkData `json:"your_performance"`
+	PerformanceRanking string        `json:"performance_ranking"` // TOP_10, TOP_25, AVERAGE, BELOW_AVERAGE
+}
+
+// BenchmarkData represents benchmark performance data.
+type BenchmarkData struct {
+	DeliveryRate float64 `json:"delivery_rate"`
+	FailureRate  float64 `json:"failure_rate"`
+	Latency      float64 `json:"latency_ms"`
+	Volume       int64   `json:"volume"`
+}
+
+// Advanced Delivery Analytics Types
+
+// DeliveryAnalytics represents comprehensive delivery analytics.
+type DeliveryAnalytics struct {
+	Summary                 DeliveryAnalyticsSummary `json:"summary"`
+	FailureAnalysis         FailureAnalysis          `json:"failure_analysis"`
+	OptimizationSuggestions []OptimizationSuggestion `json:"optimization_suggestions"`
+	PerformanceInsights     PerformanceInsights      `json:"performance_insights"`
+	Period                  AnalyticsPeriod          `json:"period"`
+}
+
+// DeliveryAnalyticsSummary represents a summary of delivery analytics.
+type DeliveryAnalyticsSummary struct {
+	TotalMessages        int64   `json:"total_messages"`
+	SuccessfulDeliveries int64   `json:"successful_deliveries"`
+	FailedDeliveries     int64   `json:"failed_deliveries"`
+	SuccessRate          float64 `json:"success_rate"`
+	FailureRate          float64 `json:"failure_rate"`
+	AverageLatency       float64 `json:"average_latency_ms"`
+	MedianLatency        float64 `json:"median_latency_ms"`
+	P95Latency           float64 `json:"p95_latency_ms"`
+	P99Latency           float64 `json:"p99_latency_ms"`
+}
+
+// FailureAnalysis represents detailed failure analysis.
+type FailureAnalysis struct {
+	TopFailureReasons  []FailureReason         `json:"top_failure_reasons"`
+	FailuresByCategory map[string]int64        `json:"failures_by_category"`
+	FailuresBySeverity map[string]int64        `json:"failures_by_severity"`
+	FailureTrends      []FailureTrendData      `json:"failure_trends"`
+	RecurringIssues    []RecurringIssue        `json:"recurring_issues"`
+	ImpactAssessment   FailureImpactAssessment `json:"impact_assessment"`
+}
+
+// FailureTrendData represents failure trend information.
+type FailureTrendData struct {
+	Date          string           `json:"date"`
+	TotalFailures int64            `json:"total_failures"`
+	FailureRate   float64          `json:"failure_rate"`
+	ByCategory    map[string]int64 `json:"by_category"`
+	BySeverity    map[string]int64 `json:"by_severity"`
+}
+
+// RecurringIssue represents a recurring delivery issue.
+type RecurringIssue struct {
+	IssueType        string    `json:"issue_type"`
+	Frequency        int64     `json:"frequency"`
+	AffectedMessages int64     `json:"affected_messages"`
+	FirstSeen        time.Time `json:"first_seen"`
+	LastSeen         time.Time `json:"last_seen"`
+	Pattern          string    `json:"pattern"`
+	Severity         string    `json:"severity"`
+	Status           string    `json:"status"` // ACTIVE, RESOLVED, INVESTIGATING
+}
+
+// FailureImpactAssessment represents the impact of failures.
+type FailureImpactAssessment struct {
+	BusinessImpact       string  `json:"business_impact"`        // HIGH, MEDIUM, LOW
+	UserExperienceImpact string  `json:"user_experience_impact"` // HIGH, MEDIUM, LOW
+	RevenueImpact        float64 `json:"revenue_impact"`
+	ReputationRisk       string  `json:"reputation_risk"` // HIGH, MEDIUM, LOW
+	ComplianceRisk       string  `json:"compliance_risk"` // HIGH, MEDIUM, LOW
+}
+
+// OptimizationSuggestion represents delivery optimization suggestions.
+type OptimizationSuggestion struct {
+	Category       string   `json:"category"`
+	Title          string   `json:"title"`
+	Description    string   `json:"description"`
+	Priority       string   `json:"priority"`        // HIGH, MEDIUM, LOW
+	Complexity     string   `json:"complexity"`      // HIGH, MEDIUM, LOW
+	ExpectedImpact string   `json:"expected_impact"` // Expected improvement
+	Implementation string   `json:"implementation"`  // How to implement
+	Timeline       string   `json:"timeline"`        // Expected timeline
+	Prerequisites  []string `json:"prerequisites,omitempty"`
+	Metrics        []string `json:"metrics"`       // Metrics to track
+	EstimatedROI   float64  `json:"estimated_roi"` // Return on investment
+}
+
+// PerformanceInsights represents performance insights and patterns.
+type PerformanceInsights struct {
+	BestPerformingHours    []int                    `json:"best_performing_hours"`
+	WorstPerformingHours   []int                    `json:"worst_performing_hours"`
+	BestPerformingDays     []int                    `json:"best_performing_days"`
+	WorstPerformingDays    []int                    `json:"worst_performing_days"`
+	MessageTypePerformance map[string]DeliveryStats `json:"message_type_performance"`
+	RegionalPerformance    map[string]DeliveryStats `json:"regional_performance,omitempty"`
+	SeasonalPatterns       []SeasonalPattern        `json:"seasonal_patterns,omitempty"`
+	AnomalyDetection       []PerformanceAnomaly     `json:"anomaly_detection,omitempty"`
+}
+
+// SeasonalPattern represents seasonal performance patterns.
+type SeasonalPattern struct {
+	Period         string  `json:"period"`     // DAILY, WEEKLY, MONTHLY
+	Pattern        string  `json:"pattern"`    // Description of the pattern
+	Impact         string  `json:"impact"`     // Impact on performance
+	Confidence     float64 `json:"confidence"` // Confidence level 0-100
+	Recommendation string  `json:"recommendation"`
+}
+
+// PerformanceAnomaly represents detected performance anomalies.
+type PerformanceAnomaly struct {
+	DetectedAt     time.Time `json:"detected_at"`
+	Type           string    `json:"type"`     // SPIKE, DROP, TREND_CHANGE
+	Metric         string    `json:"metric"`   // Which metric was affected
+	Severity       string    `json:"severity"` // HIGH, MEDIUM, LOW
+	Description    string    `json:"description"`
+	ExpectedValue  float64   `json:"expected_value"`
+	ActualValue    float64   `json:"actual_value"`
+	Deviation      float64   `json:"deviation"` // Percentage deviation
+	PossibleCauses []string  `json:"possible_causes,omitempty"`
+	Status         string    `json:"status"` // INVESTIGATING, RESOLVED, IGNORED
+}
+
+// ComplianceStatus represents compliance and policy status.
+type ComplianceStatus struct {
+	Status           string               `json:"status"` // COMPLIANT, WARNING, VIOLATION
+	PolicyViolations []PolicyViolation    `json:"policy_violations,omitempty"`
+	Restrictions     []AccountRestriction `json:"restrictions,omitempty"`
+	LastReview       time.Time            `json:"last_review"`
+}
+
+// PolicyViolation represents a policy violation.
+type PolicyViolation struct {
+	Type        string    `json:"type"`
+	Severity    string    `json:"severity"` // HIGH, MEDIUM, LOW
+	Description string    `json:"description"`
+	Date        time.Time `json:"date"`
+	Status      string    `json:"status"` // ACTIVE, RESOLVED, APPEALED
+}
+
+// AccountRestriction represents account restrictions.
+type AccountRestriction struct {
+	Type        string     `json:"type"`
+	Description string     `json:"description"`
+	StartDate   time.Time  `json:"start_date"`
+	EndDate     *time.Time `json:"end_date,omitempty"`
+	Active      bool       `json:"active"`
+}
+
+// Phone Number Analytics Types
+
+// PhoneNumberAnalytics represents comprehensive phone number analytics.
+type PhoneNumberAnalytics struct {
+	PhoneNumberID      string                   `json:"phone_number_id"`
+	DisplayPhoneNumber string                   `json:"display_phone_number"`
+	PerformanceMetrics PhoneNumberPerformance   `json:"performance_metrics"`
+	StatusInfo         PhoneNumberStatusInfo    `json:"status_info"`
+	Configuration      PhoneNumberConfiguration `json:"configuration"`
+	Period             AnalyticsPeriod          `json:"period"`
+}
+
+// PhoneNumberPerformance represents performance metrics for a phone number.
+type PhoneNumberPerformance struct {
+	MessageVolume       MessageVolumeMetrics       `json:"message_volume"`
+	DeliveryPerformance DeliveryPerformanceMetrics `json:"delivery_performance"`
+	UsagePatterns       UsagePatternMetrics        `json:"usage_patterns"`
+	CostMetrics         PhoneNumberCostMetrics     `json:"cost_metrics"`
+}
+
+// MessageVolumeMetrics represents message volume statistics.
+type MessageVolumeMetrics struct {
+	TotalMessages    int64             `json:"total_messages"`
+	InboundMessages  int64             `json:"inbound_messages"`
+	OutboundMessages int64             `json:"outbound_messages"`
+	MessagesByType   map[string]int64  `json:"messages_by_type"`
+	DailyVolume      []DailyVolumeData `json:"daily_volume,omitempty"`
+	PeakHours        []PeakHourData    `json:"peak_hours,omitempty"`
+}
+
+// DailyVolumeData represents daily message volume.
+type DailyVolumeData struct {
+	Date     string `json:"date"`
+	Inbound  int64  `json:"inbound"`
+	Outbound int64  `json:"outbound"`
+	Total    int64  `json:"total"`
+}
+
+// PeakHourData represents peak usage hours.
+type PeakHourData struct {
+	Hour         int   `json:"hour"`
+	MessageCount int64 `json:"message_count"`
+	DayOfWeek    int   `json:"day_of_week"`
+}
+
+// DeliveryPerformanceMetrics represents delivery performance statistics.
+type DeliveryPerformanceMetrics struct {
+	SuccessRate      float64                  `json:"success_rate"`
+	FailureRate      float64                  `json:"failure_rate"`
+	AverageLatency   float64                  `json:"average_latency_ms"`
+	DeliveryByType   map[string]DeliveryStats `json:"delivery_by_type"`
+	FailureBreakdown []FailureBreakdownData   `json:"failure_breakdown,omitempty"`
+}
+
+// DeliveryStats represents delivery statistics for a message type.
+type DeliveryStats struct {
+	Sent      int64   `json:"sent"`
+	Delivered int64   `json:"delivered"`
+	Failed    int64   `json:"failed"`
+	Rate      float64 `json:"rate"`
+}
+
+// FailureBreakdownData represents failure analysis data.
+type FailureBreakdownData struct {
+	ErrorCode   string  `json:"error_code"`
+	ErrorType   string  `json:"error_type"`
+	Count       int64   `json:"count"`
+	Percentage  float64 `json:"percentage"`
+	Description string  `json:"description"`
+}
+
+// UsagePatternMetrics represents usage pattern analysis.
+type UsagePatternMetrics struct {
+	ActiveHours      []int                   `json:"active_hours"`
+	ActiveDays       []int                   `json:"active_days"`
+	ConversationFlow ConversationFlowMetrics `json:"conversation_flow"`
+	UserEngagement   UserEngagementMetrics   `json:"user_engagement"`
+}
+
+// ConversationFlowMetrics represents conversation flow analysis.
+type ConversationFlowMetrics struct {
+	AverageConversationLength float64 `json:"average_conversation_length"`
+	ConversationStarters      int64   `json:"conversation_starters"`
+	ConversationEnders        int64   `json:"conversation_enders"`
+	ResponseTime              float64 `json:"average_response_time_minutes"`
+}
+
+// UserEngagementMetrics represents user engagement statistics.
+type UserEngagementMetrics struct {
+	UniqueUsers    int64   `json:"unique_users"`
+	ReturningUsers int64   `json:"returning_users"`
+	NewUsers       int64   `json:"new_users"`
+	EngagementRate float64 `json:"engagement_rate"`
+	RetentionRate  float64 `json:"retention_rate"`
+}
+
+// PhoneNumberCostMetrics represents cost metrics for a phone number.
+type PhoneNumberCostMetrics struct {
+	TotalCost      float64            `json:"total_cost"`
+	Currency       string             `json:"currency"`
+	CostPerMessage float64            `json:"cost_per_message"`
+	CostByType     map[string]float64 `json:"cost_by_type"`
+	MonthlyCosts   []MonthlyCostData  `json:"monthly_costs,omitempty"`
+}
+
+// MonthlyCostData represents monthly cost breakdown.
+type MonthlyCostData struct {
+	Month    string  `json:"month"`
+	Cost     float64 `json:"cost"`
+	Messages int64   `json:"messages"`
+	AvgCost  float64 `json:"avg_cost_per_message"`
+}
+
+// PhoneNumberStatusInfo represents phone number status information.
+type PhoneNumberStatusInfo struct {
+	Status             string                   `json:"status"`              // CONNECTED, DISCONNECTED, PENDING
+	VerificationStatus string                   `json:"verification_status"` // VERIFIED, UNVERIFIED, PENDING
+	QualityRating      string                   `json:"quality_rating"`      // HIGH, MEDIUM, LOW
+	HealthStatus       PhoneNumberHealth        `json:"health_status"`
+	Capabilities       []string                 `json:"capabilities"`
+	Restrictions       []PhoneNumberRestriction `json:"restrictions,omitempty"`
+	LastStatusUpdate   time.Time                `json:"last_status_update"`
+}
+
+// PhoneNumberHealth represents health status details.
+type PhoneNumberHealth struct {
+	Overall   string        `json:"overall"` // HEALTHY, WARNING, CRITICAL
+	Issues    []HealthIssue `json:"issues,omitempty"`
+	LastCheck time.Time     `json:"last_check"`
+	Metrics   HealthMetrics `json:"metrics"`
+}
+
+// HealthIssue represents a health issue.
+type HealthIssue struct {
+	Type        string    `json:"type"`
+	Severity    string    `json:"severity"`
+	Description string    `json:"description"`
+	DetectedAt  time.Time `json:"detected_at"`
+	Status      string    `json:"status"` // ACTIVE, RESOLVED, INVESTIGATING
+}
+
+// HealthMetrics represents health-related metrics.
+type HealthMetrics struct {
+	UptimePercentage  float64 `json:"uptime_percentage"`
+	ErrorRate         float64 `json:"error_rate"`
+	ResponseTime      float64 `json:"response_time_ms"`
+	ThroughputLimit   int64   `json:"throughput_limit"`
+	CurrentThroughput int64   `json:"current_throughput"`
+}
+
+// PhoneNumberRestriction represents restrictions on a phone number.
+type PhoneNumberRestriction struct {
+	Type        string     `json:"type"`
+	Description string     `json:"description"`
+	StartDate   time.Time  `json:"start_date"`
+	EndDate     *time.Time `json:"end_date,omitempty"`
+	Active      bool       `json:"active"`
+	Reason      string     `json:"reason,omitempty"`
+}
+
+// PhoneNumberConfiguration represents phone number configuration.
+type PhoneNumberConfiguration struct {
+	DisplayName   string                `json:"display_name"`
+	AboutText     string                `json:"about_text"`
+	ProfilePhoto  *ProfilePhoto         `json:"profile_photo,omitempty"`
+	BusinessHours *BusinessHours        `json:"business_hours,omitempty"`
+	AutoReply     *AutoReplySettings    `json:"auto_reply,omitempty"`
+	Webhooks      *WebhookConfiguration `json:"webhooks,omitempty"`
+}
+
+// ProfilePhoto represents profile photo information.
+type ProfilePhoto struct {
+	URL         string    `json:"url"`
+	ID          string    `json:"id,omitempty"`
+	UploadedAt  time.Time `json:"uploaded_at"`
+	Size        int64     `json:"size"`
+	ContentType string    `json:"content_type"`
+}
+
+// BusinessHours represents business hours configuration.
+type BusinessHours struct {
+	Timezone string        `json:"timezone"`
+	Schedule []DaySchedule `json:"schedule"`
+	Holidays []Holiday     `json:"holidays,omitempty"`
+	Enabled  bool          `json:"enabled"`
+}
+
+// DaySchedule represents schedule for a day of the week.
+type DaySchedule struct {
+	DayOfWeek int        `json:"day_of_week"` // 0 = Sunday, 1 = Monday, etc.
+	IsOpen    bool       `json:"is_open"`
+	Hours     []TimeSlot `json:"hours,omitempty"`
+}
+
+// TimeSlot represents a time slot.
+type TimeSlot struct {
+	Start string `json:"start"` // HH:MM format
+	End   string `json:"end"`   // HH:MM format
+}
+
+// Holiday represents a holiday.
+type Holiday struct {
+	Date        string `json:"date"` // YYYY-MM-DD format
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
+// AutoReplySettings represents auto-reply configuration.
+type AutoReplySettings struct {
+	Enabled        bool   `json:"enabled"`
+	Message        string `json:"message"`
+	OutOfHoursOnly bool   `json:"out_of_hours_only"`
+	FirstTimeOnly  bool   `json:"first_time_only"`
+}
+
+// WebhookConfiguration represents webhook configuration.
+type WebhookConfiguration struct {
+	URL         string    `json:"url"`
+	VerifyToken string    `json:"verify_token"`
+	Events      []string  `json:"events"`
+	Enabled     bool      `json:"enabled"`
+	LastUpdated time.Time `json:"last_updated"`
+}
+
+// Analytics Request/Response Types
+
+// AnalyticsRequest represents a request for analytics data.
+type AnalyticsRequest struct {
+	Start          string   `json:"start"`                 // YYYY-MM-DD format
+	End            string   `json:"end"`                   // YYYY-MM-DD format
+	Granularity    string   `json:"granularity,omitempty"` // HOURLY, DAILY, MONTHLY
+	MetricTypes    []string `json:"metric_types,omitempty"`
+	PhoneNumberIDs []string `json:"phone_number_ids,omitempty"`
+	ProductTypes   []string `json:"product_types,omitempty"`
+}
+
+// AnalyticsResponse represents the response from analytics API.
+type AnalyticsResponse struct {
+	Data   []AnalyticsDataPoint `json:"data"`
+	Paging *PagingInfo          `json:"paging,omitempty"`
+}
+
+// AnalyticsDataPoint represents a single analytics data point.
+type AnalyticsDataPoint struct {
+	Name        string           `json:"name"`
+	Period      string           `json:"period"`
+	Values      []AnalyticsValue `json:"values"`
+	Title       string           `json:"title,omitempty"`
+	Description string           `json:"description,omitempty"`
+}
+
+// AnalyticsValue represents a value in analytics data.
+type AnalyticsValue struct {
+	Value     interface{} `json:"value"`
+	EndTime   string      `json:"end_time"`
+	StartTime string      `json:"start_time,omitempty"`
+}
+
+// Business Profile Types
+
+// BusinessProfileInfo represents a business profile information.
+type BusinessProfileInfo struct {
+	About             string   `json:"about,omitempty"`
+	Address           string   `json:"address,omitempty"`
+	Description       string   `json:"description,omitempty"`
+	Email             string   `json:"email,omitempty"`
+	ProfilePictureURL string   `json:"profile_picture_url,omitempty"`
+	Websites          []string `json:"websites,omitempty"`
+	Vertical          string   `json:"vertical,omitempty"`
+}
+
+// UpdateBusinessProfileRequest represents a request to update business profile.
+type UpdateBusinessProfileRequest struct {
+	About                *string  `json:"about,omitempty"`
+	Address              *string  `json:"address,omitempty"`
+	Description          *string  `json:"description,omitempty"`
+	Email                *string  `json:"email,omitempty"`
+	ProfilePictureHandle string   `json:"profile_picture_handle,omitempty"`
+	Websites             []string `json:"websites,omitempty"`
+	Vertical             *string  `json:"vertical,omitempty"`
+}
+
+// Analytics Options
+
+// AnalyticsOption is a functional option for analytics requests.
+type AnalyticsOption func(*AnalyticsRequest)
+
+// WithAnalyticsGranularity sets the granularity for analytics.
+func WithAnalyticsGranularity(granularity string) AnalyticsOption {
+	return func(r *AnalyticsRequest) {
+		r.Granularity = granularity
+	}
+}
+
+// WithAnalyticsMetricTypes sets the metric types for analytics.
+func WithAnalyticsMetricTypes(metricTypes ...string) AnalyticsOption {
+	return func(r *AnalyticsRequest) {
+		r.MetricTypes = metricTypes
+	}
+}
+
+// WithAnalyticsPhoneNumbers sets the phone number IDs for analytics.
+func WithAnalyticsPhoneNumbers(phoneNumberIDs ...string) AnalyticsOption {
+	return func(r *AnalyticsRequest) {
+		r.PhoneNumberIDs = phoneNumberIDs
+	}
+}
+
+// WithAnalyticsProductTypes sets the product types for analytics.
+func WithAnalyticsProductTypes(productTypes ...string) AnalyticsOption {
+	return func(r *AnalyticsRequest) {
+		r.ProductTypes = productTypes
+	}
+}
+
+// Constants for analytics
+
+// Granularity constants
+const (
+	GranularityHourly  = "HOURLY"
+	GranularityDaily   = "DAILY"
+	GranularityMonthly = "MONTHLY"
+)
+
+// Metric type constants
+const (
+	MetricTypeCost                = "cost"
+	MetricTypeConversation        = "conversation"
+	MetricTypeMessage             = "message"
+	MetricTypePhoneNumberInsights = "phone_number_insights"
+)
+
+// Product type constants
+const (
+	ProductTypeWhatsApp = "whatsapp"
+)
+
+// Quality score constants
+const (
+	QualityScoreGreen  = "GREEN"
+	QualityScoreYellow = "YELLOW"
+	QualityScoreRed    = "RED"
+)
+
+// Quality trend constants
+const (
+	QualityTrendImproving = "IMPROVING"
+	QualityTrendStable    = "STABLE"
+	QualityTrendDeclining = "DECLINING"
+)
+
+// Compliance status constants
+const (
+	ComplianceStatusCompliant = "COMPLIANT"
+	ComplianceStatusWarning   = "WARNING"
+	ComplianceStatusViolation = "VIOLATION"
+)
+
+// Phone number health constants
+const (
+	HealthStatusHealthy  = "HEALTHY"
+	HealthStatusWarning  = "WARNING"
+	HealthStatusCritical = "CRITICAL"
+)
+
 // TemplateListOption is a functional option for listing templates.
 type TemplateListOption func(*TemplateListParams)
 

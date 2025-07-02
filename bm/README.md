@@ -4,13 +4,18 @@ The `bm` package provides comprehensive support for managing WhatsApp Business A
 
 ## Features
 
-- 🏗️ **Template Builder API**: Fluent interface for creating message templates
-- 📋 **Complete Template Management**: Create, read, update, delete templates via Business Management API
-- ✅ **Template Validation**: Comprehensive validation framework with detailed error reporting
-- 🔧 **Template Categories**: Support for Marketing, Utility, and Authentication templates
-- 🎯 **Component Support**: Headers, body, footer, and buttons with all parameter types
-- 📱 **Template Sending**: Integration with CloudAPI for sending approved templates
-- 🧩 **Convenience Functions**: Pre-built templates for common use cases
+* 🏗️ **Template Builder API**: Fluent interface for creating message templates
+* 📋 **Complete Template Management**: Create, read, update, delete templates via Business Management API
+* ✅ **Template Validation**: Comprehensive validation framework with detailed error reporting
+* 🔧 **Template Categories**: Support for Marketing, Utility, and Authentication templates
+* 🎯 **Component Support**: Headers, body, footer, and buttons with all parameter types
+* 📱 **Template Sending**: Integration with CloudAPI for sending approved templates
+* 🧩 **Convenience Functions**: Pre-built templates for common use cases
+* 📊 **Analytics & Monitoring**: Comprehensive cost analytics, quality metrics, and performance monitoring
+* 💰 **Cost Analytics**: Message costs, conversation costs, and template usage analytics with granular reporting
+* 📈 **Account Quality Metrics**: Quality score monitoring, delivery metrics, and compliance status tracking
+* 📞 **Phone Number Analytics**: Performance metrics, status monitoring, and configuration management
+* 🔍 **Health Monitoring**: Real-time health checks, uptime tracking, and issue detection
 
 ## Quick Start
 
@@ -107,6 +112,42 @@ _, err := cloudClient.SendTemplateWithHeaderImage(ctx, userPhone, "summer_sale",
     "https://example.com/banner.jpg", "20%", "August 31st")
 ```
 
+### 6. Analytics and Monitoring
+
+```go
+// Get cost analytics for the last 30 days
+endDate := time.Now().Format("2006-01-02")
+startDate := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+
+costAnalytics, err := client.GetCostAnalytics(ctx, startDate, endDate,
+    bm.WithAnalyticsGranularity(bm.GranularityDaily),
+    bm.WithAnalyticsMetricTypes(bm.MetricTypeCost),
+)
+
+fmt.Printf("Total Cost: %.2f %s\n", costAnalytics.TotalCost.TotalCost, costAnalytics.TotalCost.Currency)
+fmt.Printf("Message Cost: %.2f %s\n", costAnalytics.TotalCost.MessageCost, costAnalytics.TotalCost.Currency)
+
+// Get account quality metrics
+qualityMetrics, err := client.GetAccountQualityMetrics(ctx, startDate, endDate)
+fmt.Printf("Quality Score: %s (Trend: %s)\n",
+    qualityMetrics.QualityScore.Current, qualityMetrics.QualityScore.Trend)
+fmt.Printf("Delivery Rate: %.2f%%\n", qualityMetrics.DeliveryMetrics.DeliveryRate)
+
+// Get phone number analytics
+phoneAnalytics, err := client.GetPhoneNumberAnalytics(ctx, phoneNumberID, startDate, endDate)
+fmt.Printf("Total Messages: %d\n", phoneAnalytics.PerformanceMetrics.MessageVolume.TotalMessages)
+fmt.Printf("Success Rate: %.2f%%\n", phoneAnalytics.PerformanceMetrics.DeliveryPerformance.SuccessRate)
+fmt.Printf("Cost per Message: %.4f %s\n",
+    phoneAnalytics.PerformanceMetrics.CostMetrics.CostPerMessage,
+    phoneAnalytics.PerformanceMetrics.CostMetrics.Currency)
+
+// Get phone number status and health
+phoneStatus, err := client.GetPhoneNumberStatus(ctx, phoneNumberID)
+fmt.Printf("Status: %s (Health: %s)\n", phoneStatus.Status, phoneStatus.HealthStatus.Overall)
+fmt.Printf("Uptime: %.2f%%\n", phoneStatus.HealthStatus.Metrics.UptimePercentage)
+fmt.Printf("Error Rate: %.2f%%\n", phoneStatus.HealthStatus.Metrics.ErrorRate)
+```
+
 ## Template Components
 
 ### Header Components
@@ -180,6 +221,7 @@ buttons := bm.NewButtons().
 ## Template Categories
 
 ### Marketing Templates
+
 For promotional content, offers, and marketing communications:
 
 ```go
@@ -189,6 +231,7 @@ template := bm.NewTemplate(name, language, bm.CategoryMarketing)
 ```
 
 ### Utility Templates
+
 For transactional messages, confirmations, and updates:
 
 ```go
@@ -198,6 +241,7 @@ template := bm.NewTemplate(name, language, bm.CategoryUtility)
 ```
 
 ### Authentication Templates
+
 For OTP, verification codes, and security messages:
 
 ```go
@@ -237,13 +281,13 @@ if bm.IsValidTemplate(templateRequest) {
 
 ### Validation Rules
 
-- **Template Name**: Lowercase letters, numbers, underscores only (max 512 chars)
-- **Language**: Format `xx_XX` (e.g., `en_US`, `es_ES`)
-- **Components**: Must have exactly one BODY component
-- **Headers**: Max 60 characters, max 1 placeholder
-- **Body**: Max 1024 characters, examples required for placeholders
-- **Footer**: Max 60 characters, no placeholders allowed
-- **Buttons**: Max 10 total (max 1 phone, max 2 URL, max 10 quick reply)
+* **Template Name**: Lowercase letters, numbers, underscores only (max 512 chars)
+* **Language**: Format `xx_XX` (e.g.,   `en_US`,   `es_ES`)
+* **Components**: Must have exactly one BODY component
+* **Headers**: Max 60 characters, max 1 placeholder
+* **Body**: Max 1024 characters, examples required for placeholders
+* **Footer**: Max 60 characters, no placeholders allowed
+* **Buttons**: Max 10 total (max 1 phone, max 2 URL, max 10 quick reply)
 
 ## Convenience Templates
 
@@ -312,10 +356,10 @@ if !result.Valid {
 
 See the `examples/templates/` directory for complete working examples:
 
-- **Basic Template Creation**: Simple utility and marketing templates
-- **Advanced Templates**: Templates with buttons, media, and complex parameters
-- **Template Management**: Complete CRUD operations workflow
-- **Template Sending**: Integration with CloudAPI for message delivery
+* **Basic Template Creation**: Simple utility and marketing templates
+* **Advanced Templates**: Templates with buttons, media, and complex parameters
+* **Template Management**: Complete CRUD operations workflow
+* **Template Sending**: Integration with CloudAPI for message delivery
 
 ## License
 

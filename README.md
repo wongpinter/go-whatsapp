@@ -351,6 +351,34 @@ templates, err := bmClient.ListTemplates(ctx,
 cloudClient := cloudapi.NewClient(phoneNumberID, accessToken)
 _, err = cloudClient.SendTemplateWithParams(ctx, userPhone, "summer_sale_2024", "en_US",
     "John Doe", "20%", "August 31st")
+
+// Get comprehensive analytics and monitoring data
+endDate := time.Now().Format("2006-01-02")
+startDate := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+
+// Cost analytics with granular reporting
+costAnalytics, err := bmClient.GetCostAnalytics(ctx, startDate, endDate,
+    bm.WithAnalyticsGranularity(bm.GranularityDaily),
+    bm.WithAnalyticsMetricTypes(bm.MetricTypeCost),
+)
+fmt.Printf("Total Cost: %.2f %s\n", costAnalytics.TotalCost.TotalCost, costAnalytics.TotalCost.Currency)
+
+// Account quality metrics and compliance monitoring
+qualityMetrics, err := bmClient.GetAccountQualityMetrics(ctx, startDate, endDate)
+fmt.Printf("Quality Score: %s (Trend: %s)\n",
+    qualityMetrics.QualityScore.Current, qualityMetrics.QualityScore.Trend)
+fmt.Printf("Delivery Rate: %.2f%%\n", qualityMetrics.DeliveryMetrics.DeliveryRate)
+
+// Phone number analytics and performance monitoring
+phoneAnalytics, err := bmClient.GetPhoneNumberAnalytics(ctx, phoneNumberID, startDate, endDate)
+fmt.Printf("Total Messages: %d (Success Rate: %.2f%%)\n",
+    phoneAnalytics.PerformanceMetrics.MessageVolume.TotalMessages,
+    phoneAnalytics.PerformanceMetrics.DeliveryPerformance.SuccessRate)
+
+// Phone number status and health monitoring
+phoneStatus, err := bmClient.GetPhoneNumberStatus(ctx, phoneNumberID)
+fmt.Printf("Phone Status: %s (Health: %s)\n",
+    phoneStatus.Status, phoneStatus.HealthStatus.Overall)
 ```
 
 **Key Features:**
@@ -362,6 +390,10 @@ _, err = cloudClient.SendTemplateWithParams(ctx, userPhone, "summer_sale_2024", 
 * **Button Builder**: Support for quick reply, URL, and phone number buttons
 * **Convenience Functions**: Pre-built templates for common use cases
 * **CloudAPI Integration**: Seamless template sending with parameter substitution
+* **Analytics & Monitoring**: Comprehensive cost analytics, quality metrics, and performance monitoring
+* **Phone Number Management**: Advanced phone number analytics, status monitoring, and configuration
+* **Account Quality Tracking**: Quality score monitoring, delivery metrics, and compliance status
+* **Cost Analytics**: Message costs, conversation costs, and template usage analytics with granular reporting
 
 **Supported Template Components:**
 * Text headers with placeholders (max 1 variable)
