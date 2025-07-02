@@ -7,15 +7,17 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog"
+	"github.com/wongpinter/go-whatsapp/internal/httpclient"
 )
 
 // Client provides Flow management operations via the WhatsApp Graph API.
 type Client struct {
-	wabaID      string
-	accessToken string
-	apiVersion  string
-	logger      *zerolog.Logger
-	restyClient *resty.Client
+	wabaID        string
+	accessToken   string
+	apiVersion    string
+	logger        *zerolog.Logger
+	restyClient   *resty.Client
+	clientManager *httpclient.Manager
 }
 
 // Option configures the Flow client.
@@ -35,6 +37,20 @@ func WithAPIVersion(version string) Option {
 	}
 }
 
+// WithHTTPClientManager sets a custom HTTP client manager.
+func WithHTTPClientManager(manager *httpclient.Manager) Option {
+	return func(c *Client) {
+		c.clientManager = manager
+	}
+}
+
+// WithHTTPClient sets a custom HTTP client.
+func WithHTTPClient(client *resty.Client) Option {
+	return func(c *Client) {
+		c.restyClient = client
+	}
+}
+
 // NewClient creates a new Flow management client.
 func NewClient(wabaID, accessToken string, opts ...Option) *Client {
 	nopLogger := zerolog.Nop()
@@ -50,19 +66,50 @@ func NewClient(wabaID, accessToken string, opts ...Option) *Client {
 		opt(c)
 	}
 
-	// Initialize Resty client
-	c.restyClient = resty.New().
-		SetBaseURL(fmt.Sprintf("https://graph.facebook.com/%s", c.apiVersion)).
-		SetAuthToken(c.accessToken).
-		SetHeader("Content-Type", "application/json").
-		SetRetryCount(3).
-		SetRetryWaitTime(1 * time.Second).
-		SetRetryMaxWaitTime(10 * time.Second)
+	// Initialize HTTP client
+	if c.restyClient == nil {
+		if c.clientManager != nil {
+			// Use shared HTTP client manager
+			clientConfig := &httpclient.ClientConfig{
+				AccessToken:   c.accessToken,
+				APIVersion:    c.apiVersion,
+				Timeout:       30 * time.Second,
+				RetryCount:    3,
+				RetryWaitTime: 1 * time.Second,
+				RetryMaxWait:  10 * time.Second,
+				UserAgent:     "go-whatsapp-flows/1.0.0",
+				Logger:        c.logger,
+			}
+
+			client, err := c.clientManager.GetOrCreateClient(httpclient.FlowsAPIClient, clientConfig)
+			if err != nil {
+				c.logger.Error().Err(err).Msg("Failed to create HTTP client via manager, falling back to direct creation")
+				c.restyClient = c.createDirectClient()
+			} else {
+				c.restyClient = client
+			}
+		} else {
+			// Fall back to direct client creation
+			c.restyClient = c.createDirectClient()
+		}
+	}
 
 	// Set up response handling
 	c.restyClient.OnAfterResponse(c.handleResponse)
 
 	return c
+}
+
+// createDirectClient creates a Resty client directly (fallback method)
+func (c *Client) createDirectClient() *resty.Client {
+	return resty.New().
+		SetBaseURL(fmt.Sprintf("https://graph.facebook.com/%s", c.apiVersion)).
+		SetAuthToken(c.accessToken).
+		SetHeader("Content-Type", "application/json").
+		SetHeader("User-Agent", "go-whatsapp-flows/1.0.0").
+		SetRetryCount(3).
+		SetRetryWaitTime(1 * time.Second).
+		SetRetryMaxWaitTime(10 * time.Second)
 }
 
 // CreateFlowRequest represents a request to create a new Flow.

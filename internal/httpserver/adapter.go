@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 )
@@ -119,8 +120,11 @@ func (c *StandardHTTPContext) JSON(code int, obj interface{}) error {
 	c.SetHeader("Content-Type", "application/json")
 	c.Status(code)
 
-	// Simple JSON encoding - in real implementation, use json.Marshal
-	data := []byte(`{"status":"ok"}`) // Placeholder
+	// Use json.Marshal to properly encode the object
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
 	return c.Write(data)
 }
 

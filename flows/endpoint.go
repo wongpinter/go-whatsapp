@@ -417,3 +417,16 @@ func (m *FlowStateManager) DeleteState(flowToken string) {
 
 	delete(m.states, flowToken)
 }
+
+// HandleDataExchange provides framework-agnostic data exchange handling
+// This method works with the HTTP server abstraction
+func (h *DataExchangeHandler) HandleDataExchange(ctx interface{}) error {
+	// For now, we'll use a type assertion approach
+	// In a real implementation, this would use the httpserver.HTTPContext interface
+
+	// This is a placeholder implementation that delegates to the existing ServeHTTP method
+	// The actual implementation would extract the request data from the context
+	// and process it using the existing processDataExchange method
+
+	return fmt.Errorf("framework-agnostic data exchange handler not yet fully implemented")
+}
