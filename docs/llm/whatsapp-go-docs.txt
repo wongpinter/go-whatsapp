@@ -1,0 +1,761 @@
+# WhatsApp Go Library - LLM Documentation Format
+
+## METADATA
+- Library: go-whatsapp
+- Version: 1.0.0
+- Language: Go
+- License: MIT
+- Repository: github.com/wongpinter/go-whatsapp
+- Documentation Format: LLM-Optimized
+- Last Updated: 2025-07-02
+- Target Audience: AI Agents, MCP Systems, Code Generation Tools
+
+## OVERVIEW
+The go-whatsapp library is a comprehensive Go package for integrating with WhatsApp Business Cloud API. It provides type-safe interfaces for message sending, webhook handling, business management, and WhatsApp Flows with framework-agnostic HTTP server abstraction.
+
+## CORE_FEATURES
+- Message sending (text, media, templates, interactive)
+- Webhook event handling with signature verification
+- Business Management API for template management
+- WhatsApp Flows builder and data exchange
+- HTTP server abstraction (Gin, Echo, standard HTTP)
+- HTTP client management with connection pooling
+- Comprehensive error handling and rate limiting
+- Security features (signature verification, token encryption)
+
+## PACKAGE_STRUCTURE
+```
+github.com/wongpinter/go-whatsapp/
+├── cloudapi/          # Message sending functionality
+├── webhook/           # Webhook handling and event processing
+├── bm/               # Business Management API
+├── flows/            # WhatsApp Flows builder and management
+├── internal/         # Internal shared components
+│   ├── config/       # Configuration management
+│   ├── crypto/       # Cryptographic utilities
+│   ├── httpclient/   # HTTP client abstraction
+│   └── httpserver/   # HTTP server abstraction
+└── examples/         # Usage examples
+```
+
+## INSTALLATION
+```bash
+go get github.com/wongpinter/go-whatsapp
+```
+
+## QUICK_START_PATTERNS
+
+### Pattern: Send Text Message
+```go
+import "github.com/wongpinter/go-whatsapp/cloudapi"
+
+client := cloudapi.NewClient("PHONE_NUMBER_ID", "ACCESS_TOKEN")
+resp, err := client.SendText(context.Background(), "+1234567890", "Hello World!")
+```
+
+### Pattern: Setup Webhook Handler
+```go
+import "github.com/wongpinter/go-whatsapp/webhook"
+
+handler := webhook.NewHandler("VERIFY_TOKEN", "APP_SECRET", logger)
+handler.SetMessageHandler(&MyHandler{})
+http.HandleFunc("/webhook", handler.ServeHTTP)
+```
+
+### Pattern: Build WhatsApp Flow
+```go
+import "github.com/wongpinter/go-whatsapp/flows"
+
+flow := flows.NewFlowBuilder().
+    SetVersion("3.0").
+    AddScreen("screen1").
+        SetTitle("Contact Form").
+        AddTextInput("name", "Full Name").SetRequired(true).Done().
+        AddEmailInput("email", "Email").SetRequired(true).Done().
+        SetTerminal(true).
+        Done().
+    Build()
+```
+
+### Pattern: Create Message Template
+```go
+import "github.com/wongpinter/go-whatsapp/bm"
+
+template := bm.NewTemplateBuilder().
+    SetName("order_confirmation").
+    SetCategory(bm.CategoryUtility).
+    SetLanguage("en_US").
+    AddComponent(bm.NewBodyComponent().SetText("Order {{1}} confirmed")).
+    Build()
+```
+
+## API_REFERENCE
+
+### CloudAPI Package
+```go
+// Client creation
+func NewClient(phoneNumberID, accessToken string, options ...ClientOption) *Client
+
+// Message sending methods
+func (c *Client) SendText(ctx context.Context, to, text string) (*MessageResponse, error)
+func (c *Client) SendImage(ctx context.Context, to, mediaURL, caption string) (*MessageResponse, error)
+func (c *Client) SendTemplate(ctx context.Context, to, templateName, languageCode string) (*MessageResponse, error)
+func (c *Client) SendFlow(ctx context.Context, to, text, flowID, flowToken, buttonText string) (*MessageResponse, error)
+
+// Client options
+func WithLogger(logger *zerolog.Logger) ClientOption
+func WithRateLimiting(requestsPerSecond float64) ClientOption
+func WithRetryConfig(maxRetries int, backoffDuration time.Duration) ClientOption
+```
+
+### Webhook Package
+```go
+// Handler creation
+func NewHandler(verifyToken, appSecret string, logger *zerolog.Logger) *Handler
+
+// Event handlers
+type MessageHandler interface {
+    OnTextMessage(ctx context.Context, msg *Message, metadata *Metadata) error
+    OnImageMessage(ctx context.Context, msg *Message, metadata *Metadata) error
+    OnInteractiveMessage(ctx context.Context, msg *Message, metadata *Metadata) error
+}
+
+// Handler configuration
+func (h *Handler) SetMessageHandler(handler MessageHandler) *Handler
+func (h *Handler) SetStatusHandler(handler StatusHandler) *Handler
+func (h *Handler) Use(middleware func(http.HandlerFunc) http.HandlerFunc) *Handler
+```
+
+### Flows Package
+```go
+// Flow builder
+func NewFlowBuilder() *FlowBuilder
+func (b *FlowBuilder) SetVersion(version string) *FlowBuilder
+func (b *FlowBuilder) AddScreen(id string) *ScreenBuilder
+func (b *FlowBuilder) Build() *Flow
+
+// Screen builder
+func (s *ScreenBuilder) SetTitle(title string) *ScreenBuilder
+func (s *ScreenBuilder) AddTextInput(name, label string) *TextInputBuilder
+func (s *ScreenBuilder) AddEmailInput(name, label string) *EmailInputBuilder
+func (s *ScreenBuilder) AddDropdownInput(name, label string) *DropdownInputBuilder
+func (s *ScreenBuilder) SetTerminal(terminal bool) *ScreenBuilder
+func (s *ScreenBuilder) Done() *FlowBuilder
+
+// Flow management
+func NewClient(accessToken string) *Client
+func (c *Client) CreateFlow(ctx context.Context, req CreateFlowRequest) (*CreateFlowResponse, error)
+func (c *Client) PublishFlow(ctx context.Context, flowID string) error
+```
+
+### Business Management Package
+```go
+// Client creation
+func NewClient(wabaID, accessToken string, options ...ClientOption) *Client
+
+// Template operations
+func (c *Client) CreateTemplate(ctx context.Context, template *Template) (*CreateTemplateResponse, error)
+func (c *Client) ListTemplates(ctx context.Context, options ListTemplatesOptions) (*ListTemplatesResponse, error)
+func (c *Client) GetTemplate(ctx context.Context, templateID string) (*Template, error)
+
+// Template builder
+func NewTemplateBuilder() *TemplateBuilder
+func (b *TemplateBuilder) SetName(name string) *TemplateBuilder
+func (b *TemplateBuilder) SetCategory(category Category) *TemplateBuilder
+func (b *TemplateBuilder) AddComponent(component Component) *TemplateBuilder
+```
+
+## ERROR_HANDLING
+
+### Error Types
+```go
+type APIError struct {
+    HTTPStatus int    `json:"http_status"`
+    ErrorCode  int    `json:"code"`
+    Title      string `json:"title"`
+    Message    string `json:"message"`
+    Details    string `json:"details"`
+}
+
+type ValidationError struct {
+    Field   string `json:"field"`
+    Message string `json:"message"`
+    Code    string `json:"code"`
+}
+
+type RateLimitError struct {
+    RetryAfter time.Duration `json:"retry_after"`
+    Limit      int           `json:"limit"`
+    Remaining  int           `json:"remaining"`
+}
+```
+
+### Error Checking Functions
+```go
+func IsAPIError(err error) bool
+func IsValidationError(err error) bool
+func IsRateLimitError(err error) bool
+func IsTemporaryError(err error) bool
+```
+
+## COMMON_ERROR_CODES
+- 130429: Rate limit exceeded (retry with exponential backoff)
+- 80007: API call limit exceeded (retry with exponential backoff)
+- 131000: Generic user error (do not retry)
+- 131005: Message undeliverable (do not retry)
+- 131014: Template not found (check template name/ID)
+- 131016: Template paused (template needs approval)
+
+## FRAMEWORK_INTEGRATION
+
+### HTTP Server Abstraction
+```go
+// Server factory
+func NewServerFactory() *ServerFactory
+func (f *ServerFactory) CreateServer(framework Framework) (Server, error)
+
+// Framework types
+const (
+    FrameworkStandard Framework = "standard"
+    FrameworkGin      Framework = "gin"
+    FrameworkEcho     Framework = "echo"
+)
+
+// Build tags for real implementations
+// Build with: go build -tags gin
+// Build with: go build -tags echo
+// Build with: go build -tags "gin echo"
+```
+
+### Integration Patterns
+```go
+// Standard HTTP
+factory := httpserver.NewServerFactory()
+server, _ := factory.CreateServer(httpserver.FrameworkStandard)
+webhookAdapter.RegisterRoutes(server.Router())
+
+// Gin (with build tag)
+server, _ := factory.CreateServer(httpserver.FrameworkGin)
+ginEngine := server.Native().(*gin.Engine)
+ginEngine.Use(gin.Logger())
+
+// Echo (with build tag)
+server, _ := factory.CreateServer(httpserver.FrameworkEcho)
+echoInstance := server.Native().(*echo.Echo)
+echoInstance.Use(middleware.Logger())
+```
+
+## SECURITY_PATTERNS
+
+### Webhook Signature Verification
+```go
+// Automatic verification (recommended)
+handler := webhook.NewHandler(verifyToken, appSecret, logger)
+
+// Manual verification
+func VerifySignature(payload []byte, signature, secret string) bool
+```
+
+### Flow Token Security
+```go
+// Generate secure token
+flowToken, err := flows.GenerateFlowToken(flowID, userID, data)
+
+// Validate token
+payload, err := flows.ValidateFlowToken(token, privateKey)
+```
+
+## RATE_LIMITING_PATTERNS
+
+### Built-in Rate Limiting
+```go
+client := cloudapi.NewClient(phoneNumberID, accessToken,
+    cloudapi.WithRateLimiting(80.0), // 80 requests per second
+)
+```
+
+### Custom Rate Limiting
+```go
+rateLimiter := rate.NewLimiter(rate.Limit(80), 100)
+if !rateLimiter.Allow() {
+    return errors.New("rate limit exceeded")
+}
+```
+
+### Retry with Exponential Backoff
+```go
+func sendWithRetry(client *cloudapi.Client, to, message string) error {
+    maxRetries := 3
+    baseDelay := time.Second
+    
+    for i := 0; i < maxRetries; i++ {
+        resp, err := client.SendText(context.Background(), to, message)
+        if err == nil {
+            return nil
+        }
+        
+        if apiErr, ok := err.(*cloudapi.APIError); ok && apiErr.Code == 130429 {
+            delay := baseDelay * time.Duration(1<<i)
+            time.Sleep(delay)
+            continue
+        }
+        
+        return err
+    }
+    
+    return errors.New("max retries exceeded")
+}
+```
+
+## CONFIGURATION_OPTIONS
+
+### CloudAPI Client Options
+- WithLogger(logger *zerolog.Logger): Set custom logger
+- WithHTTPClient(client *http.Client): Set custom HTTP client
+- WithRateLimiting(requestsPerSecond float64): Enable rate limiting
+- WithRetryConfig(maxRetries int, backoffDuration time.Duration): Configure retries
+- WithAPIVersion(version string): Set API version
+
+### Webhook Handler Options
+- SetMessageHandler(handler MessageHandler): Set message event handler
+- SetStatusHandler(handler StatusHandler): Set status update handler
+- SetErrorHandler(handler ErrorHandler): Set error handler
+- Use(middleware func(http.HandlerFunc) http.HandlerFunc): Add middleware
+
+### Flow Configuration Options
+- WithTokenTTL(ttl time.Duration): Set token expiration time
+- WithPrivateKey(key *rsa.PrivateKey): Set encryption key
+- WithValidation(enabled bool): Enable/disable validation
+- WithLogger(logger *zerolog.Logger): Set custom logger
+
+## TESTING_PATTERNS
+
+### Unit Testing with Mocks
+```go
+// Mock HTTP client for testing
+mockClient := &http.Client{
+    Transport: &mockTransport{},
+}
+client := cloudapi.NewClient(phoneNumberID, accessToken,
+    cloudapi.WithHTTPClient(mockClient),
+)
+```
+
+### Framework Testing
+```bash
+# Test without build tags (mock implementations)
+go test ./...
+
+# Test with specific framework
+go test -tags gin ./...
+go test -tags echo ./...
+```
+
+## PERFORMANCE_CONSIDERATIONS
+- Use HTTP client manager for connection pooling
+- Implement proper context timeouts
+- Use structured logging for observability
+- Monitor error rates and implement circuit breakers
+- Cache frequently accessed data
+- Process webhooks asynchronously when possible
+
+## COMMON_USE_CASES
+
+### Use Case: Customer Support Bot
+```go
+// 1. Receive webhook message
+// 2. Process customer inquiry
+// 3. Send appropriate response or escalate to human
+```
+
+### Use Case: Order Notifications
+```go
+// 1. Create order confirmation template
+// 2. Send template message with order details
+// 3. Handle delivery status updates via webhooks
+```
+
+### Use Case: Lead Generation Flow
+```go
+// 1. Build multi-step Flow for lead capture
+// 2. Send Flow message to prospects
+// 3. Handle Flow completion via data exchange
+// 4. Process lead data and follow up
+```
+
+### Use Case: Marketing Campaign
+```go
+// 1. Create marketing template with approval
+// 2. Send template messages to customer segments
+// 3. Track delivery and read receipts
+// 4. Analyze campaign performance
+```
+
+## TROUBLESHOOTING_GUIDE
+
+### Issue: Webhook signature verification fails
+- Check app secret configuration
+- Verify payload reading (don't read body twice)
+- Ensure correct signature header format
+
+### Issue: Rate limit exceeded
+- Implement exponential backoff retry
+- Check your API tier limits
+- Use built-in rate limiting features
+
+### Issue: Template not approved
+- Review template content for policy compliance
+- Check template category selection
+- Ensure proper parameter formatting
+
+### Issue: Flow token validation fails
+- Verify private key is correctly loaded
+- Check token expiration time
+- Ensure proper token generation
+
+## DEPENDENCIES
+- github.com/go-resty/resty/v2: HTTP client
+- github.com/rs/zerolog: Structured logging
+- crypto/rsa: RSA encryption for Flow tokens
+- net/http: Standard HTTP functionality
+
+## BUILD_TAGS
+- gin: Enable real Gin framework integration
+- echo: Enable real Echo framework integration
+- Default (no tags): Use mock implementations for testing
+
+## EXAMPLES_DIRECTORY
+- examples/basic/: Simple usage examples
+- examples/webhook/: Webhook handling examples
+- examples/flows/: WhatsApp Flows examples
+- examples/templates/: Template management examples
+- examples/gin-integration/: Gin framework integration
+- examples/echo-integration/: Echo framework integration
+
+## VERSION_COMPATIBILITY
+- Go: 1.19+
+- WhatsApp Business API: v17.0+
+- Gin: v1.9+
+- Echo: v4.10+
+
+## SUPPORT_RESOURCES
+- GitHub Repository: github.com/wongpinter/go-whatsapp
+- Issue Tracker: github.com/wongpinter/go-whatsapp/issues
+- Discussions: github.com/wongpinter/go-whatsapp/discussions
+- WhatsApp API Docs: developers.facebook.com/docs/whatsapp/cloud-api
+
+## STRUCTURED_API_REFERENCE
+
+### CLOUDAPI_PACKAGE_METHODS
+```
+NewClient(phoneNumberID, accessToken string, options ...ClientOption) *Client
+SendText(ctx context.Context, to, text string) (*MessageResponse, error)
+SendTextWithOptions(ctx context.Context, to, text string, options ...MessageOption) (*MessageResponse, error)
+SendImage(ctx context.Context, to, mediaURL, caption string) (*MessageResponse, error)
+SendVideo(ctx context.Context, to, mediaURL, caption string) (*MessageResponse, error)
+SendAudio(ctx context.Context, to, mediaURL string) (*MessageResponse, error)
+SendDocument(ctx context.Context, to, mediaURL, filename string) (*MessageResponse, error)
+SendTemplate(ctx context.Context, to, templateName, languageCode string) (*MessageResponse, error)
+SendTemplateWithParams(ctx context.Context, to, templateName, languageCode string, params []TemplateParameter) (*MessageResponse, error)
+SendButtons(ctx context.Context, to, text string, buttons []Button) (*MessageResponse, error)
+SendList(ctx context.Context, to, text, buttonText string, sections []ListSection) (*MessageResponse, error)
+SendFlow(ctx context.Context, to, text, flowID, flowToken, buttonText string) (*MessageResponse, error)
+SendLocation(ctx context.Context, to string, latitude, longitude float64, name, address string) (*MessageResponse, error)
+SendContact(ctx context.Context, to string, contacts []Contact) (*MessageResponse, error)
+```
+
+### WEBHOOK_PACKAGE_METHODS
+```
+NewHandler(verifyToken, appSecret string, logger *zerolog.Logger) *Handler
+SetMessageHandler(handler MessageHandler) *Handler
+SetStatusHandler(handler StatusHandler) *Handler
+SetErrorHandler(handler ErrorHandler) *Handler
+Use(middleware func(http.HandlerFunc) http.HandlerFunc) *Handler
+ServeHTTP(w http.ResponseWriter, r *http.Request)
+VerifySignature(payload []byte, signature, secret string) bool
+```
+
+### FLOWS_PACKAGE_METHODS
+```
+NewFlowBuilder() *FlowBuilder
+SetVersion(version string) *FlowBuilder
+AddScreen(id string) *ScreenBuilder
+Build() *Flow
+SetTitle(title string) *ScreenBuilder
+SetData(data map[string]interface{}) *ScreenBuilder
+AddTextHeading(text string) *ScreenBuilder
+AddTextInput(name, label string) *TextInputBuilder
+AddEmailInput(name, label string) *EmailInputBuilder
+AddPhoneInput(name, label string) *PhoneInputBuilder
+AddDropdownInput(name, label string) *DropdownInputBuilder
+AddRadioButtonsInput(name, label string) *RadioButtonsInputBuilder
+AddCheckboxInput(name, label string) *CheckboxInputBuilder
+AddDatePickerInput(name, label string) *DatePickerInputBuilder
+AddFooter(text string) *ScreenBuilder
+SetTerminal(terminal bool) *ScreenBuilder
+SetRequired(required bool) *InputBuilder
+AddOption(value, label string) *SelectInputBuilder
+Done() *ScreenBuilder
+NewClient(accessToken string) *Client
+CreateFlow(ctx context.Context, req CreateFlowRequest) (*CreateFlowResponse, error)
+GetFlow(ctx context.Context, flowID string, fields ...string) (*Flow, error)
+UpdateFlow(ctx context.Context, flowID string, req UpdateFlowRequest) error
+DeleteFlow(ctx context.Context, flowID string) error
+PublishFlow(ctx context.Context, flowID string) error
+DeprecateFlow(ctx context.Context, flowID string) error
+GenerateFlowToken(flowID, userID string, data map[string]interface{}) (string, error)
+ValidateFlowToken(token string, privateKey *rsa.PrivateKey) (*TokenPayload, error)
+NewDataExchangeHandler(privateKey *rsa.PrivateKey, logger *zerolog.Logger) *DataExchangeHandler
+RegisterAction(action string, handler ActionHandler) *DataExchangeHandler
+```
+
+### BM_PACKAGE_METHODS
+```
+NewClient(wabaID, accessToken string, options ...ClientOption) *Client
+CreateTemplate(ctx context.Context, template *Template) (*CreateTemplateResponse, error)
+GetTemplate(ctx context.Context, templateID string) (*Template, error)
+ListTemplates(ctx context.Context, options ListTemplatesOptions) (*ListTemplatesResponse, error)
+UpdateTemplate(ctx context.Context, templateID string, template *Template) error
+DeleteTemplate(ctx context.Context, templateID string) error
+GetTemplateAnalytics(ctx context.Context, templateID string, options AnalyticsOptions) (*TemplateAnalytics, error)
+NewTemplateBuilder() *TemplateBuilder
+SetName(name string) *TemplateBuilder
+SetCategory(category Category) *TemplateBuilder
+SetLanguage(language string) *TemplateBuilder
+AddComponent(component Component) *TemplateBuilder
+Build() *Template
+NewHeaderComponent() *HeaderComponentBuilder
+NewBodyComponent() *BodyComponentBuilder
+NewFooterComponent() *FooterComponentBuilder
+NewButtonComponent() *ButtonComponentBuilder
+SetText(text string) *ComponentBuilder
+AddParameter(paramType ParameterType, example string) *ComponentBuilder
+```
+
+### HTTP_SERVER_ABSTRACTION_METHODS
+```
+NewServerFactory() *ServerFactory
+CreateServer(framework Framework) (Server, error)
+DetectFramework(server interface{}) Framework
+Router() Router
+Start(addr string) error
+Shutdown(ctx context.Context) error
+Native() interface{}
+GET(path string, handler HandlerFunc)
+POST(path string, handler HandlerFunc)
+PUT(path string, handler HandlerFunc)
+DELETE(path string, handler HandlerFunc)
+PATCH(path string, handler HandlerFunc)
+Group(prefix string) Router
+Use(middleware ...MiddlewareFunc)
+```
+
+### ERROR_HANDLING_FUNCTIONS
+```
+IsAPIError(err error) bool
+IsValidationError(err error) bool
+IsNetworkError(err error) bool
+IsRateLimitError(err error) bool
+IsTemporaryError(err error) bool
+GetAPIError(err error) *APIError
+GetValidationErrors(err error) []ValidationError
+GetRateLimitInfo(err error) *RateLimitError
+```
+
+## TYPE_DEFINITIONS
+
+### MESSAGE_TYPES
+```go
+type Message struct {
+    ID        string    `json:"id"`
+    From      string    `json:"from"`
+    Timestamp string    `json:"timestamp"`
+    Type      string    `json:"type"`
+    Text      *Text     `json:"text,omitempty"`
+    Image     *Media    `json:"image,omitempty"`
+    Video     *Media    `json:"video,omitempty"`
+    Audio     *Media    `json:"audio,omitempty"`
+    Document  *Media    `json:"document,omitempty"`
+    Location  *Location `json:"location,omitempty"`
+    Contacts  []Contact `json:"contacts,omitempty"`
+    Interactive *Interactive `json:"interactive,omitempty"`
+}
+
+type Text struct {
+    Body string `json:"body"`
+}
+
+type Media struct {
+    ID       string `json:"id,omitempty"`
+    Link     string `json:"link,omitempty"`
+    Caption  string `json:"caption,omitempty"`
+    Filename string `json:"filename,omitempty"`
+    MimeType string `json:"mime_type,omitempty"`
+    SHA256   string `json:"sha256,omitempty"`
+}
+```
+
+### TEMPLATE_TYPES
+```go
+type Template struct {
+    Name       string      `json:"name"`
+    Category   Category    `json:"category"`
+    Language   string      `json:"language"`
+    Components []Component `json:"components"`
+    Status     string      `json:"status,omitempty"`
+}
+
+type Category string
+const (
+    CategoryMarketing      Category = "MARKETING"
+    CategoryUtility        Category = "UTILITY"
+    CategoryAuthentication Category = "AUTHENTICATION"
+)
+
+type Component interface {
+    Type() string
+}
+
+type HeaderComponent struct {
+    Type   string `json:"type"`
+    Format string `json:"format,omitempty"`
+    Text   string `json:"text,omitempty"`
+}
+
+type BodyComponent struct {
+    Type       string      `json:"type"`
+    Text       string      `json:"text"`
+    Parameters []Parameter `json:"parameters,omitempty"`
+}
+```
+
+### FLOW_TYPES
+```go
+type Flow struct {
+    Version string   `json:"version"`
+    Screens []Screen `json:"screens"`
+}
+
+type Screen struct {
+    ID       string                 `json:"id"`
+    Title    string                 `json:"title,omitempty"`
+    Data     map[string]interface{} `json:"data,omitempty"`
+    Layout   Layout                 `json:"layout"`
+    Terminal bool                   `json:"terminal,omitempty"`
+}
+
+type Layout struct {
+    Type     string      `json:"type"`
+    Children []Component `json:"children"`
+}
+
+type TextInput struct {
+    Type        string `json:"type"`
+    Name        string `json:"name"`
+    Label       string `json:"label"`
+    Required    bool   `json:"required,omitempty"`
+    Placeholder string `json:"placeholder,omitempty"`
+}
+```
+
+## CONSTANTS_AND_ENUMS
+
+### FRAMEWORK_CONSTANTS
+```go
+const (
+    FrameworkStandard Framework = "standard"
+    FrameworkGin      Framework = "gin"
+    FrameworkEcho     Framework = "echo"
+)
+```
+
+### MESSAGE_TYPE_CONSTANTS
+```go
+const (
+    MessageTypeText        = "text"
+    MessageTypeImage       = "image"
+    MessageTypeVideo       = "video"
+    MessageTypeAudio       = "audio"
+    MessageTypeDocument    = "document"
+    MessageTypeLocation    = "location"
+    MessageTypeContacts    = "contacts"
+    MessageTypeInteractive = "interactive"
+)
+```
+
+### ERROR_CODE_CONSTANTS
+```go
+const (
+    ErrorCodeRateLimit     = 130429
+    ErrorCodeAPILimit      = 80007
+    ErrorCodeUserError     = 131000
+    ErrorCodeUndeliverable = 131005
+    ErrorCodeTemplateNotFound = 131014
+    ErrorCodeTemplatePaused   = 131016
+)
+```
+
+## VALIDATION_RULES
+
+### PHONE_NUMBER_FORMAT
+- Must include country code (e.g., +1234567890)
+- No spaces, dashes, or special characters
+- Length: 10-15 digits after country code
+
+### TEMPLATE_NAME_RULES
+- Lowercase letters, numbers, underscores only
+- No spaces or special characters
+- Maximum 512 characters
+- Must be unique within business account
+
+### FLOW_VERSION_RULES
+- Supported versions: "3.0"
+- Must be specified for all Flows
+- Version determines available components
+
+### MESSAGE_LENGTH_LIMITS
+- Text messages: 4096 characters
+- Template parameters: 1024 characters each
+- Button text: 20 characters
+- List item title: 24 characters
+
+## WEBHOOK_EVENT_TYPES
+
+### MESSAGE_EVENTS
+- messages: New incoming message
+- message_echoes: Outbound message echo (if enabled)
+
+### STATUS_EVENTS
+- message_status: Message delivery status update
+- account_alerts: Account-level alerts
+- account_update: Account information changes
+
+### SYSTEM_EVENTS
+- customer_number_change: Customer phone number change
+- customer_identity_change: Customer identity verification change
+
+## FLOW_COMPONENT_TYPES
+
+### INPUT_COMPONENTS
+- TextInput: Single-line text input
+- TextArea: Multi-line text input
+- EmailInput: Email address input with validation
+- PhoneInput: Phone number input with formatting
+- NumberInput: Numeric input with validation
+- DatePicker: Date selection component
+- Dropdown: Single selection dropdown
+- RadioButtons: Single selection radio buttons
+- CheckboxGroup: Multiple selection checkboxes
+
+### DISPLAY_COMPONENTS
+- TextHeading: Heading text
+- TextSubheading: Subheading text
+- TextBody: Body text
+- TextCaption: Caption text
+- Image: Image display
+- EmbeddedLink: Embedded link preview
+
+### LAYOUT_COMPONENTS
+- Footer: Screen footer
+- OptIn: Opt-in component for marketing
+- Form: Form container
