@@ -185,6 +185,13 @@ secrets.json
 docs/_build/
 site/
 
+# Requirements and planning files (keep codebase clean)
+requirements/
+technical.md
+planning/
+specs/
+design/
+
 # Local development files
 local/
 dev/
