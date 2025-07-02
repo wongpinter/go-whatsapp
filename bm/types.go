@@ -592,6 +592,482 @@ type PerformanceAnomaly struct {
 	Status         string    `json:"status"` // INVESTIGATING, RESOLVED, IGNORED
 }
 
+// Template Usage Cost Analytics Types
+
+// TemplateCostAnalytics represents comprehensive template cost analytics.
+type TemplateCostAnalytics struct {
+	TemplateCosts        []TemplateCostData            `json:"template_costs"`
+	TotalCost            CostSummary                   `json:"total_cost"`
+	CostByCategory       map[string]float64            `json:"cost_by_category"`
+	CostByTemplate       map[string]float64            `json:"cost_by_template"`
+	UsagePatterns        TemplateUsagePatterns         `json:"usage_patterns"`
+	PerformanceMetrics   TemplatePerformanceMetrics    `json:"performance_metrics"`
+	OptimizationInsights []TemplateOptimizationInsight `json:"optimization_insights"`
+	Period               AnalyticsPeriod               `json:"period"`
+}
+
+// TemplateUsagePatterns represents template usage patterns and trends.
+type TemplateUsagePatterns struct {
+	MostUsedTemplates    []TemplateUsageData    `json:"most_used_templates"`
+	LeastUsedTemplates   []TemplateUsageData    `json:"least_used_templates"`
+	UsageTrends          []TemplateUsageTrend   `json:"usage_trends"`
+	SeasonalPatterns     []TemplateSeasonalData `json:"seasonal_patterns,omitempty"`
+	CategoryDistribution map[string]int64       `json:"category_distribution"`
+}
+
+// TemplateUsageData represents usage data for a specific template.
+type TemplateUsageData struct {
+	TemplateName string  `json:"template_name"`
+	TemplateID   string  `json:"template_id"`
+	Category     string  `json:"category"`
+	UsageCount   int64   `json:"usage_count"`
+	SuccessRate  float64 `json:"success_rate"`
+	Cost         float64 `json:"cost"`
+	Currency     string  `json:"currency"`
+	Trend        string  `json:"trend"` // INCREASING, STABLE, DECREASING
+}
+
+// TemplateUsageTrend represents usage trends over time.
+type TemplateUsageTrend struct {
+	Date         string  `json:"date"`
+	TemplateName string  `json:"template_name"`
+	UsageCount   int64   `json:"usage_count"`
+	Cost         float64 `json:"cost"`
+	SuccessRate  float64 `json:"success_rate"`
+}
+
+// TemplateSeasonalData represents seasonal usage patterns.
+type TemplateSeasonalData struct {
+	Period     string   `json:"period"`     // DAILY, WEEKLY, MONTHLY
+	Pattern    string   `json:"pattern"`    // Description of the pattern
+	Templates  []string `json:"templates"`  // Templates affected by this pattern
+	Impact     string   `json:"impact"`     // Impact on usage/cost
+	Confidence float64  `json:"confidence"` // Confidence level 0-100
+}
+
+// TemplatePerformanceMetrics represents performance metrics for templates.
+type TemplatePerformanceMetrics struct {
+	AverageSuccessRate    float64                        `json:"average_success_rate"`
+	AverageCostPerMessage float64                        `json:"average_cost_per_message"`
+	TotalMessages         int64                          `json:"total_messages"`
+	TotalCost             float64                        `json:"total_cost"`
+	Currency              string                         `json:"currency"`
+	PerformanceByCategory map[string]CategoryPerformance `json:"performance_by_category"`
+	TopPerformers         []TemplateUsageData            `json:"top_performers"`
+	PoorPerformers        []TemplateUsageData            `json:"poor_performers"`
+}
+
+// CategoryPerformance represents performance metrics by template category.
+type CategoryPerformance struct {
+	Category      string  `json:"category"`
+	TemplateCount int64   `json:"template_count"`
+	TotalMessages int64   `json:"total_messages"`
+	SuccessRate   float64 `json:"success_rate"`
+	AverageCost   float64 `json:"average_cost"`
+	TotalCost     float64 `json:"total_cost"`
+	Currency      string  `json:"currency"`
+}
+
+// TemplateOptimizationInsight represents optimization insights for templates.
+type TemplateOptimizationInsight struct {
+	Type              string                               `json:"type"` // COST_OPTIMIZATION, PERFORMANCE_IMPROVEMENT, USAGE_OPTIMIZATION
+	Title             string                               `json:"title"`
+	Description       string                               `json:"description"`
+	Priority          string                               `json:"priority"` // HIGH, MEDIUM, LOW
+	Impact            string                               `json:"impact"`   // Expected impact
+	Recommendations   []TemplateOptimizationRecommendation `json:"recommendations"`
+	AffectedTemplates []string                             `json:"affected_templates"`
+	EstimatedSavings  float64                              `json:"estimated_savings"`
+	Currency          string                               `json:"currency"`
+}
+
+// TemplatePerformanceInsights represents detailed performance insights for a specific template.
+type TemplatePerformanceInsights struct {
+	TemplateName       string                               `json:"template_name"`
+	TemplateID         string                               `json:"template_id"`
+	Category           string                               `json:"category"`
+	Performance        TemplatePerformanceData              `json:"performance"`
+	CostEfficiency     TemplateCostEfficiency               `json:"cost_efficiency"`
+	UsageAnalysis      TemplateUsageAnalysis                `json:"usage_analysis"`
+	CompetitorAnalysis TemplateCompetitorAnalysis           `json:"competitor_analysis,omitempty"`
+	Recommendations    []TemplateOptimizationRecommendation `json:"recommendations"`
+	Period             AnalyticsPeriod                      `json:"period"`
+}
+
+// TemplatePerformanceData represents performance data for a template.
+type TemplatePerformanceData struct {
+	TotalSent      int64   `json:"total_sent"`
+	TotalDelivered int64   `json:"total_delivered"`
+	TotalFailed    int64   `json:"total_failed"`
+	SuccessRate    float64 `json:"success_rate"`
+	FailureRate    float64 `json:"failure_rate"`
+	AverageLatency float64 `json:"average_latency_ms"`
+	EngagementRate float64 `json:"engagement_rate"`
+	ResponseRate   float64 `json:"response_rate"`
+	ConversionRate float64 `json:"conversion_rate,omitempty"`
+}
+
+// TemplateCostEfficiency represents cost efficiency metrics for a template.
+type TemplateCostEfficiency struct {
+	TotalCost           float64 `json:"total_cost"`
+	Currency            string  `json:"currency"`
+	CostPerMessage      float64 `json:"cost_per_message"`
+	CostPerSuccess      float64 `json:"cost_per_success"`
+	CostPerEngagement   float64 `json:"cost_per_engagement"`
+	CostPerConversion   float64 `json:"cost_per_conversion,omitempty"`
+	EfficiencyRating    string  `json:"efficiency_rating"`    // EXCELLENT, GOOD, AVERAGE, POOR
+	BenchmarkComparison float64 `json:"benchmark_comparison"` // Percentage vs benchmark
+}
+
+// TemplateUsageAnalysis represents usage analysis for a template.
+type TemplateUsageAnalysis struct {
+	UsageFrequency   string               `json:"usage_frequency"` // DAILY, WEEKLY, MONTHLY, OCCASIONAL
+	PeakUsageHours   []int                `json:"peak_usage_hours"`
+	PeakUsageDays    []int                `json:"peak_usage_days"`
+	UsageTrend       string               `json:"usage_trend"`       // INCREASING, STABLE, DECREASING
+	SeasonalityScore float64              `json:"seasonality_score"` // 0-100
+	UsageConsistency float64              `json:"usage_consistency"` // 0-100
+	DailyUsage       []TemplateUsageTrend `json:"daily_usage,omitempty"`
+}
+
+// TemplateCompetitorAnalysis represents competitor analysis for templates.
+type TemplateCompetitorAnalysis struct {
+	IndustryBenchmark    TemplatePerformanceData `json:"industry_benchmark"`
+	YourPerformance      TemplatePerformanceData `json:"your_performance"`
+	PerformanceRanking   string                  `json:"performance_ranking"` // TOP_10, TOP_25, AVERAGE, BELOW_AVERAGE
+	CompetitiveAdvantage []string                `json:"competitive_advantage,omitempty"`
+	ImprovementAreas     []string                `json:"improvement_areas,omitempty"`
+}
+
+// TemplateOptimizationRecommendation represents optimization recommendations for templates.
+type TemplateOptimizationRecommendation struct {
+	Category         string   `json:"category"` // CONTENT, TIMING, TARGETING, COST
+	Title            string   `json:"title"`
+	Description      string   `json:"description"`
+	Priority         string   `json:"priority"`        // HIGH, MEDIUM, LOW
+	Complexity       string   `json:"complexity"`      // HIGH, MEDIUM, LOW
+	ExpectedImpact   string   `json:"expected_impact"` // Expected improvement
+	Implementation   string   `json:"implementation"`  // How to implement
+	Timeline         string   `json:"timeline"`        // Expected timeline
+	Prerequisites    []string `json:"prerequisites,omitempty"`
+	Metrics          []string `json:"metrics"` // Metrics to track
+	EstimatedSavings float64  `json:"estimated_savings"`
+	EstimatedROI     float64  `json:"estimated_roi"`
+	Currency         string   `json:"currency"`
+}
+
+// Compliance Monitoring Types
+
+// ComplianceMonitoring represents comprehensive compliance monitoring data.
+type ComplianceMonitoring struct {
+	OverallStatus        ComplianceStatus         `json:"overall_status"`
+	PolicyCompliance     PolicyComplianceData     `json:"policy_compliance"`
+	RegulatoryCompliance RegulatoryComplianceData `json:"regulatory_compliance"`
+	QualityCompliance    QualityComplianceData    `json:"quality_compliance"`
+	ComplianceHistory    []ComplianceHistoryEntry `json:"compliance_history"`
+	ComplianceAlerts     []ComplianceAlert        `json:"compliance_alerts"`
+	ComplianceReports    []ComplianceReport       `json:"compliance_reports"`
+	Period               AnalyticsPeriod          `json:"period"`
+}
+
+// PolicyComplianceData represents policy compliance information.
+type PolicyComplianceData struct {
+	WhatsAppPolicies  []PolicyComplianceItem `json:"whatsapp_policies"`
+	BusinessPolicies  []PolicyComplianceItem `json:"business_policies"`
+	ContentPolicies   []PolicyComplianceItem `json:"content_policies"`
+	MessagingPolicies []PolicyComplianceItem `json:"messaging_policies"`
+	OverallScore      float64                `json:"overall_score"`    // 0-100
+	ComplianceLevel   string                 `json:"compliance_level"` // EXCELLENT, GOOD, FAIR, POOR
+	LastAssessment    time.Time              `json:"last_assessment"`
+	NextAssessment    time.Time              `json:"next_assessment"`
+}
+
+// PolicyComplianceItem represents compliance with a specific policy.
+type PolicyComplianceItem struct {
+	PolicyID           string                    `json:"policy_id"`
+	PolicyName         string                    `json:"policy_name"`
+	PolicyCategory     string                    `json:"policy_category"`
+	ComplianceStatus   string                    `json:"compliance_status"` // COMPLIANT, WARNING, VIOLATION, UNKNOWN
+	ComplianceScore    float64                   `json:"compliance_score"`  // 0-100
+	LastChecked        time.Time                 `json:"last_checked"`
+	Violations         []PolicyViolationDetail   `json:"violations,omitempty"`
+	Requirements       []PolicyRequirement       `json:"requirements"`
+	RecommendedActions []PolicyRecommendedAction `json:"recommended_actions,omitempty"`
+}
+
+// PolicyViolationDetail represents detailed information about a policy violation.
+type PolicyViolationDetail struct {
+	ViolationID      string               `json:"violation_id"`
+	ViolationType    string               `json:"violation_type"`
+	Severity         string               `json:"severity"` // CRITICAL, HIGH, MEDIUM, LOW
+	Description      string               `json:"description"`
+	DetectedAt       time.Time            `json:"detected_at"`
+	ResolvedAt       *time.Time           `json:"resolved_at,omitempty"`
+	Status           string               `json:"status"`       // ACTIVE, RESOLVED, DISPUTED, UNDER_REVIEW
+	ImpactLevel      string               `json:"impact_level"` // HIGH, MEDIUM, LOW
+	AffectedMessages int64                `json:"affected_messages"`
+	Evidence         []ViolationEvidence  `json:"evidence,omitempty"`
+	Resolution       *ViolationResolution `json:"resolution,omitempty"`
+}
+
+// ViolationEvidence represents evidence of a policy violation.
+type ViolationEvidence struct {
+	EvidenceType string    `json:"evidence_type"` // MESSAGE, TEMPLATE, BEHAVIOR, METRICS
+	Description  string    `json:"description"`
+	Timestamp    time.Time `json:"timestamp"`
+	Reference    string    `json:"reference,omitempty"`
+	Severity     string    `json:"severity"`
+}
+
+// ViolationResolution represents the resolution of a policy violation.
+type ViolationResolution struct {
+	ResolutionType     string    `json:"resolution_type"` // CORRECTED, DISPUTED, EXEMPTED, MITIGATED
+	Description        string    `json:"description"`
+	ResolvedBy         string    `json:"resolved_by"`
+	ResolvedAt         time.Time `json:"resolved_at"`
+	PreventiveMeasures []string  `json:"preventive_measures,omitempty"`
+}
+
+// PolicyRequirement represents a policy requirement.
+type PolicyRequirement struct {
+	RequirementID   string  `json:"requirement_id"`
+	Description     string  `json:"description"`
+	Mandatory       bool    `json:"mandatory"`
+	ComplianceLevel float64 `json:"compliance_level"` // 0-100
+	Status          string  `json:"status"`           // MET, PARTIAL, NOT_MET
+}
+
+// PolicyRecommendedAction represents recommended actions for policy compliance.
+type PolicyRecommendedAction struct {
+	ActionID      string   `json:"action_id"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
+	Priority      string   `json:"priority"` // HIGH, MEDIUM, LOW
+	Category      string   `json:"category"` // IMMEDIATE, PREVENTIVE, MONITORING
+	Timeline      string   `json:"timeline"` // Expected completion time
+	Impact        string   `json:"impact"`   // Expected impact on compliance
+	Prerequisites []string `json:"prerequisites,omitempty"`
+	Resources     []string `json:"resources,omitempty"`
+}
+
+// RegulatoryComplianceData represents regulatory compliance information.
+type RegulatoryComplianceData struct {
+	Jurisdictions       []JurisdictionCompliance `json:"jurisdictions"`
+	DataProtection      DataProtectionCompliance `json:"data_protection"`
+	CommunicationLaws   CommunicationCompliance  `json:"communication_laws"`
+	IndustryRegulations IndustryCompliance       `json:"industry_regulations"`
+	OverallScore        float64                  `json:"overall_score"`
+	ComplianceLevel     string                   `json:"compliance_level"`
+	LastAudit           time.Time                `json:"last_audit"`
+	NextAudit           time.Time                `json:"next_audit"`
+}
+
+// JurisdictionCompliance represents compliance for a specific jurisdiction.
+type JurisdictionCompliance struct {
+	Country         string                  `json:"country"`
+	Region          string                  `json:"region,omitempty"`
+	Regulations     []RegulationCompliance  `json:"regulations"`
+	ComplianceScore float64                 `json:"compliance_score"`
+	Status          string                  `json:"status"`
+	LastUpdated     time.Time               `json:"last_updated"`
+	Requirements    []RegulatoryRequirement `json:"requirements"`
+}
+
+// RegulationCompliance represents compliance with a specific regulation.
+type RegulationCompliance struct {
+	RegulationID    string    `json:"regulation_id"`
+	RegulationName  string    `json:"regulation_name"`
+	Category        string    `json:"category"`
+	ComplianceScore float64   `json:"compliance_score"`
+	Status          string    `json:"status"`
+	LastChecked     time.Time `json:"last_checked"`
+	Requirements    []string  `json:"requirements"`
+}
+
+// RegulatoryRequirement represents a regulatory requirement.
+type RegulatoryRequirement struct {
+	RequirementID   string     `json:"requirement_id"`
+	Description     string     `json:"description"`
+	Category        string     `json:"category"`
+	Mandatory       bool       `json:"mandatory"`
+	Status          string     `json:"status"`
+	Deadline        *time.Time `json:"deadline,omitempty"`
+	ComplianceLevel float64    `json:"compliance_level"`
+}
+
+// DataProtectionCompliance represents data protection compliance.
+type DataProtectionCompliance struct {
+	GDPRCompliance    RegulationCompliance `json:"gdpr_compliance"`
+	CCPACompliance    RegulationCompliance `json:"ccpa_compliance"`
+	DataRetention     DataRetentionPolicy  `json:"data_retention"`
+	ConsentManagement ConsentManagement    `json:"consent_management"`
+	DataSecurity      DataSecurityMeasures `json:"data_security"`
+}
+
+// DataRetentionPolicy represents data retention policy compliance.
+type DataRetentionPolicy struct {
+	PolicyID        string    `json:"policy_id"`
+	RetentionPeriod int       `json:"retention_period_days"`
+	DataTypes       []string  `json:"data_types"`
+	ComplianceScore float64   `json:"compliance_score"`
+	LastReview      time.Time `json:"last_review"`
+	Status          string    `json:"status"`
+}
+
+// ConsentManagement represents consent management compliance.
+type ConsentManagement struct {
+	ConsentRate      float64   `json:"consent_rate"`
+	OptOutRate       float64   `json:"opt_out_rate"`
+	ConsentMechanism string    `json:"consent_mechanism"`
+	ComplianceScore  float64   `json:"compliance_score"`
+	LastAudit        time.Time `json:"last_audit"`
+	ConsentRecords   int64     `json:"consent_records"`
+}
+
+// DataSecurityMeasures represents data security compliance measures.
+type DataSecurityMeasures struct {
+	EncryptionLevel   string    `json:"encryption_level"`
+	AccessControls    string    `json:"access_controls"`
+	AuditLogging      bool      `json:"audit_logging"`
+	ComplianceScore   float64   `json:"compliance_score"`
+	LastSecurityAudit time.Time `json:"last_security_audit"`
+	SecurityIncidents int64     `json:"security_incidents"`
+}
+
+// CommunicationCompliance represents communication law compliance.
+type CommunicationCompliance struct {
+	AntiSpamCompliance  RegulationCompliance `json:"anti_spam_compliance"`
+	TelemarketingLaws   RegulationCompliance `json:"telemarketing_laws"`
+	ConsentRequirements RegulationCompliance `json:"consent_requirements"`
+	OptOutCompliance    RegulationCompliance `json:"opt_out_compliance"`
+	MessageContentRules RegulationCompliance `json:"message_content_rules"`
+}
+
+// IndustryCompliance represents industry-specific compliance.
+type IndustryCompliance struct {
+	Industry            string                 `json:"industry"`
+	Regulations         []RegulationCompliance `json:"regulations"`
+	ComplianceScore     float64                `json:"compliance_score"`
+	CertificationStatus string                 `json:"certification_status"`
+	LastCertification   time.Time              `json:"last_certification"`
+	NextCertification   time.Time              `json:"next_certification"`
+}
+
+// QualityComplianceData represents quality-related compliance.
+type QualityComplianceData struct {
+	MessageQuality    MessageQualityCompliance    `json:"message_quality"`
+	DeliveryQuality   DeliveryQualityCompliance   `json:"delivery_quality"`
+	EngagementQuality EngagementQualityCompliance `json:"engagement_quality"`
+	OverallScore      float64                     `json:"overall_score"`
+	ComplianceLevel   string                      `json:"compliance_level"`
+	LastAssessment    time.Time                   `json:"last_assessment"`
+}
+
+// MessageQualityCompliance represents message quality compliance.
+type MessageQualityCompliance struct {
+	ContentQualityScore float64                   `json:"content_quality_score"`
+	TemplateCompliance  TemplateComplianceMetrics `json:"template_compliance"`
+	SpamScore           float64                   `json:"spam_score"`
+	ComplianceThreshold float64                   `json:"compliance_threshold"`
+	ViolationCount      int64                     `json:"violation_count"`
+	LastReview          time.Time                 `json:"last_review"`
+}
+
+// TemplateComplianceMetrics represents template compliance metrics.
+type TemplateComplianceMetrics struct {
+	ApprovedTemplates int64     `json:"approved_templates"`
+	RejectedTemplates int64     `json:"rejected_templates"`
+	PendingTemplates  int64     `json:"pending_templates"`
+	ComplianceRate    float64   `json:"compliance_rate"`
+	LastUpdate        time.Time `json:"last_update"`
+}
+
+// DeliveryQualityCompliance represents delivery quality compliance.
+type DeliveryQualityCompliance struct {
+	DeliveryRate     float64   `json:"delivery_rate"`
+	FailureRate      float64   `json:"failure_rate"`
+	QualityThreshold float64   `json:"quality_threshold"`
+	ComplianceStatus string    `json:"compliance_status"`
+	LastMeasurement  time.Time `json:"last_measurement"`
+}
+
+// EngagementQualityCompliance represents engagement quality compliance.
+type EngagementQualityCompliance struct {
+	EngagementRate   float64   `json:"engagement_rate"`
+	ResponseRate     float64   `json:"response_rate"`
+	OptOutRate       float64   `json:"opt_out_rate"`
+	QualityThreshold float64   `json:"quality_threshold"`
+	ComplianceStatus string    `json:"compliance_status"`
+	LastMeasurement  time.Time `json:"last_measurement"`
+}
+
+// ComplianceHistoryEntry represents a compliance history entry.
+type ComplianceHistoryEntry struct {
+	Date            string             `json:"date"`
+	ComplianceScore float64            `json:"compliance_score"`
+	Status          string             `json:"status"`
+	Changes         []ComplianceChange `json:"changes,omitempty"`
+	Events          []ComplianceEvent  `json:"events,omitempty"`
+}
+
+// ComplianceChange represents a change in compliance status.
+type ComplianceChange struct {
+	Category    string  `json:"category"`
+	OldValue    float64 `json:"old_value"`
+	NewValue    float64 `json:"new_value"`
+	Impact      string  `json:"impact"`
+	Description string  `json:"description"`
+}
+
+// ComplianceEvent represents a compliance-related event.
+type ComplianceEvent struct {
+	EventType   string    `json:"event_type"`
+	Description string    `json:"description"`
+	Impact      string    `json:"impact"`
+	Timestamp   time.Time `json:"timestamp"`
+}
+
+// ComplianceAlert represents a compliance alert.
+type ComplianceAlert struct {
+	AlertID     string             `json:"alert_id"`
+	AlertType   string             `json:"alert_type"` // VIOLATION, WARNING, THRESHOLD, DEADLINE
+	Severity    string             `json:"severity"`   // CRITICAL, HIGH, MEDIUM, LOW
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Category    string             `json:"category"`
+	Status      string             `json:"status"` // ACTIVE, ACKNOWLEDGED, RESOLVED, DISMISSED
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	DueDate     *time.Time         `json:"due_date,omitempty"`
+	Actions     []ComplianceAction `json:"actions,omitempty"`
+}
+
+// ComplianceAction represents an action to address compliance issues.
+type ComplianceAction struct {
+	ActionID    string     `json:"action_id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Priority    string     `json:"priority"`
+	Status      string     `json:"status"`
+	AssignedTo  string     `json:"assigned_to,omitempty"`
+	DueDate     *time.Time `json:"due_date,omitempty"`
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+}
+
+// ComplianceReport represents a compliance report.
+type ComplianceReport struct {
+	ReportID        string          `json:"report_id"`
+	ReportType      string          `json:"report_type"` // MONTHLY, QUARTERLY, ANNUAL, AUDIT
+	Title           string          `json:"title"`
+	GeneratedAt     time.Time       `json:"generated_at"`
+	Period          AnalyticsPeriod `json:"period"`
+	OverallScore    float64         `json:"overall_score"`
+	Status          string          `json:"status"`
+	Summary         string          `json:"summary"`
+	Recommendations []string        `json:"recommendations,omitempty"`
+	URL             string          `json:"url,omitempty"`
+}
+
 // ComplianceStatus represents compliance and policy status.
 type ComplianceStatus struct {
 	Status           string               `json:"status"` // COMPLIANT, WARNING, VIOLATION

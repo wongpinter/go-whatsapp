@@ -35,7 +35,19 @@ func main() {
 		logger.Error().Err(err).Msg("Failed to get cost analytics")
 	}
 
-	// Example 2: Get account quality metrics
+	// Example 2: Get template usage cost analytics
+	fmt.Println("\n=== Template Usage Cost Analytics ===")
+	if err := getTemplateUsageCostAnalytics(ctx, bmClient); err != nil {
+		logger.Error().Err(err).Msg("Failed to get template usage cost analytics")
+	}
+
+	// Example 3: Get compliance monitoring
+	fmt.Println("\n=== Compliance Monitoring ===")
+	if err := getComplianceMonitoring(ctx, bmClient); err != nil {
+		logger.Error().Err(err).Msg("Failed to get compliance monitoring")
+	}
+
+	// Example 4: Get account quality metrics
 	fmt.Println("\n=== Account Quality Metrics ===")
 	if err := getAccountQualityMetrics(ctx, bmClient); err != nil {
 		logger.Error().Err(err).Msg("Failed to get account quality metrics")
@@ -613,6 +625,338 @@ func getAdvancedPhoneNumberManagement(ctx context.Context, client *bm.Client, ph
 		fmt.Printf("    Display Name: %s\n", settings["display_name"])
 		fmt.Printf("    About Text: %s\n", settings["about_text"])
 		fmt.Printf("    Auto Reply: Enabled\n")
+	}
+
+	return nil
+}
+
+// getTemplateUsageCostAnalytics demonstrates template usage cost analytics features.
+func getTemplateUsageCostAnalytics(ctx context.Context, client *bm.Client) error {
+	// Get template usage cost analytics for the last 30 days
+	endDate := time.Now().Format("2006-01-02")
+	startDate := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+
+	templateAnalytics, err := client.GetTemplateUsageCostAnalytics(ctx, startDate, endDate,
+		bm.WithAnalyticsGranularity(bm.GranularityDaily),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to get template usage cost analytics: %w", err)
+	}
+
+	fmt.Printf("Template Usage Cost Analytics (%s to %s):\n", startDate, endDate)
+
+	// Total cost summary
+	fmt.Printf("  Total Cost: %.2f %s\n", templateAnalytics.TotalCost.TotalCost, templateAnalytics.TotalCost.Currency)
+	fmt.Printf("  Message Cost: %.2f %s\n", templateAnalytics.TotalCost.MessageCost, templateAnalytics.TotalCost.Currency)
+	fmt.Printf("  Template Cost: %.2f %s\n", templateAnalytics.TotalCost.TemplateCost, templateAnalytics.TotalCost.Currency)
+
+	// Template costs breakdown
+	if len(templateAnalytics.TemplateCosts) > 0 {
+		fmt.Println("  Template Cost Breakdown:")
+		for _, templateCost := range templateAnalytics.TemplateCosts {
+			fmt.Printf("    %s (%s):\n", templateCost.TemplateName, templateCost.Category)
+			fmt.Printf("      Usage: %d messages | Cost: %.2f %s | Success Rate: %.1f%%\n",
+				templateCost.Count, templateCost.Cost, templateCost.Currency, templateCost.SuccessRate)
+		}
+	}
+
+	// Cost by category
+	if len(templateAnalytics.CostByCategory) > 0 {
+		fmt.Println("  Cost by Category:")
+		for category, cost := range templateAnalytics.CostByCategory {
+			fmt.Printf("    %s: %.2f %s\n", category, cost, templateAnalytics.TotalCost.Currency)
+		}
+	}
+
+	// Usage patterns
+	patterns := templateAnalytics.UsagePatterns
+	fmt.Println("  Usage Patterns:")
+
+	if len(patterns.MostUsedTemplates) > 0 {
+		fmt.Println("    Most Used Templates:")
+		for i, template := range patterns.MostUsedTemplates {
+			if i >= 3 { // Show top 3
+				break
+			}
+			fmt.Printf("      %d. %s: %d uses, %.1f%% success rate, %.2f %s\n",
+				i+1, template.TemplateName, template.UsageCount, template.SuccessRate, template.Cost, template.Currency)
+		}
+	}
+
+	if len(patterns.LeastUsedTemplates) > 0 {
+		fmt.Println("    Least Used Templates:")
+		for i, template := range patterns.LeastUsedTemplates {
+			if i >= 3 { // Show bottom 3
+				break
+			}
+			fmt.Printf("      %d. %s: %d uses, %.1f%% success rate, %.2f %s\n",
+				i+1, template.TemplateName, template.UsageCount, template.SuccessRate, template.Cost, template.Currency)
+		}
+	}
+
+	if len(patterns.CategoryDistribution) > 0 {
+		fmt.Println("    Category Distribution:")
+		for category, count := range patterns.CategoryDistribution {
+			fmt.Printf("      %s: %d messages\n", category, count)
+		}
+	}
+
+	// Performance metrics
+	performance := templateAnalytics.PerformanceMetrics
+	fmt.Println("  Performance Metrics:")
+	fmt.Printf("    Average Success Rate: %.2f%%\n", performance.AverageSuccessRate)
+	fmt.Printf("    Average Cost per Message: %.4f %s\n", performance.AverageCostPerMessage, performance.Currency)
+	fmt.Printf("    Total Messages: %d\n", performance.TotalMessages)
+
+	if len(performance.PerformanceByCategory) > 0 {
+		fmt.Println("    Performance by Category:")
+		for category, perf := range performance.PerformanceByCategory {
+			fmt.Printf("      %s: %d templates, %d messages, %.2f%% success rate, %.4f %s avg cost\n",
+				category, perf.TemplateCount, perf.TotalMessages, perf.SuccessRate, perf.AverageCost, perf.Currency)
+		}
+	}
+
+	// Optimization insights
+	if len(templateAnalytics.OptimizationInsights) > 0 {
+		fmt.Printf("  Optimization Insights (%d):\n", len(templateAnalytics.OptimizationInsights))
+		for i, insight := range templateAnalytics.OptimizationInsights {
+			fmt.Printf("    %d. [%s] %s\n", i+1, insight.Priority, insight.Title)
+			fmt.Printf("       Type: %s | Impact: %s\n", insight.Type, insight.Impact)
+			fmt.Printf("       Description: %s\n", insight.Description)
+			fmt.Printf("       Estimated Savings: %.2f %s\n", insight.EstimatedSavings, insight.Currency)
+			if len(insight.AffectedTemplates) > 0 {
+				fmt.Printf("       Affected Templates: %v\n", insight.AffectedTemplates)
+			}
+		}
+	}
+
+	// Get detailed insights for a specific template
+	if len(templateAnalytics.TemplateCosts) > 0 {
+		templateName := templateAnalytics.TemplateCosts[0].TemplateName
+		fmt.Printf("\nDetailed Template Performance Insights for '%s':\n", templateName)
+
+		insights, err := client.GetTemplatePerformanceInsights(ctx, templateName, startDate, endDate)
+		if err != nil {
+			return fmt.Errorf("failed to get template performance insights: %w", err)
+		}
+
+		fmt.Printf("  Template: %s (%s)\n", insights.TemplateName, insights.Category)
+
+		// Performance data
+		perf := insights.Performance
+		fmt.Printf("  Performance:\n")
+		fmt.Printf("    Total Sent: %d | Delivered: %d | Failed: %d\n",
+			perf.TotalSent, perf.TotalDelivered, perf.TotalFailed)
+		fmt.Printf("    Success Rate: %.2f%% | Engagement Rate: %.2f%%\n",
+			perf.SuccessRate, perf.EngagementRate)
+		fmt.Printf("    Response Rate: %.2f%% | Conversion Rate: %.2f%%\n",
+			perf.ResponseRate, perf.ConversionRate)
+
+		// Cost efficiency
+		cost := insights.CostEfficiency
+		fmt.Printf("  Cost Efficiency:\n")
+		fmt.Printf("    Total Cost: %.2f %s | Cost per Message: %.4f %s\n",
+			cost.TotalCost, cost.Currency, cost.CostPerMessage, cost.Currency)
+		fmt.Printf("    Cost per Success: %.4f %s | Cost per Engagement: %.4f %s\n",
+			cost.CostPerSuccess, cost.Currency, cost.CostPerEngagement, cost.Currency)
+		fmt.Printf("    Efficiency Rating: %s | Benchmark Comparison: %.1f%%\n",
+			cost.EfficiencyRating, cost.BenchmarkComparison)
+
+		// Usage analysis
+		usage := insights.UsageAnalysis
+		fmt.Printf("  Usage Analysis:\n")
+		fmt.Printf("    Frequency: %s | Trend: %s\n", usage.UsageFrequency, usage.UsageTrend)
+		fmt.Printf("    Peak Hours: %v | Peak Days: %v\n", usage.PeakUsageHours, usage.PeakUsageDays)
+		fmt.Printf("    Seasonality Score: %.1f | Consistency: %.1f\n",
+			usage.SeasonalityScore, usage.UsageConsistency)
+
+		// Competitor analysis
+		if insights.CompetitorAnalysis.PerformanceRanking != "" {
+			comp := insights.CompetitorAnalysis
+			fmt.Printf("  Competitor Analysis:\n")
+			fmt.Printf("    Performance Ranking: %s\n", comp.PerformanceRanking)
+			fmt.Printf("    Your Success Rate: %.2f%% vs Industry: %.2f%%\n",
+				comp.YourPerformance.SuccessRate, comp.IndustryBenchmark.SuccessRate)
+			if len(comp.CompetitiveAdvantage) > 0 {
+				fmt.Printf("    Competitive Advantages: %v\n", comp.CompetitiveAdvantage)
+			}
+			if len(comp.ImprovementAreas) > 0 {
+				fmt.Printf("    Improvement Areas: %v\n", comp.ImprovementAreas)
+			}
+		}
+
+		// Optimization recommendations
+		if len(insights.Recommendations) > 0 {
+			fmt.Printf("  Optimization Recommendations (%d):\n", len(insights.Recommendations))
+			for i, rec := range insights.Recommendations {
+				fmt.Printf("    %d. [%s Priority] %s\n", i+1, rec.Priority, rec.Title)
+				fmt.Printf("       Category: %s | Complexity: %s\n", rec.Category, rec.Complexity)
+				fmt.Printf("       Expected Impact: %s\n", rec.ExpectedImpact)
+				fmt.Printf("       Implementation: %s\n", rec.Implementation)
+				fmt.Printf("       Timeline: %s | ROI: %.1fx | Savings: %.2f %s\n",
+					rec.Timeline, rec.EstimatedROI, rec.EstimatedSavings, rec.Currency)
+				fmt.Println()
+			}
+		}
+
+		// Get optimization recommendations for the template
+		fmt.Printf("Personalized Optimization Recommendations for '%s':\n", templateName)
+		recommendations, err := client.GetTemplateOptimizationRecommendations(ctx, templateName)
+		if err != nil {
+			return fmt.Errorf("failed to get template optimization recommendations: %w", err)
+		}
+
+		for i, rec := range recommendations {
+			fmt.Printf("  %d. %s\n", i+1, rec.Title)
+			fmt.Printf("     Priority: %s | Category: %s | Complexity: %s\n",
+				rec.Priority, rec.Category, rec.Complexity)
+			fmt.Printf("     Expected Impact: %s\n", rec.ExpectedImpact)
+			fmt.Printf("     Estimated Savings: %.2f %s | ROI: %.1fx\n",
+				rec.EstimatedSavings, rec.Currency, rec.EstimatedROI)
+			fmt.Println()
+		}
+	}
+
+	return nil
+}
+
+// getComplianceMonitoring demonstrates compliance monitoring features.
+func getComplianceMonitoring(ctx context.Context, client *bm.Client) error {
+	// Get compliance monitoring for the last 30 days
+	endDate := time.Now().Format("2006-01-02")
+	startDate := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+
+	monitoring, err := client.GetComplianceMonitoring(ctx, startDate, endDate)
+	if err != nil {
+		return fmt.Errorf("failed to get compliance monitoring: %w", err)
+	}
+
+	fmt.Printf("Compliance Monitoring (%s to %s):\n", startDate, endDate)
+
+	// Overall status
+	fmt.Printf("  Overall Status: %s\n", monitoring.OverallStatus.Status)
+	fmt.Printf("  Last Review: %s\n", monitoring.OverallStatus.LastReview.Format("2006-01-02 15:04:05"))
+
+	// Policy compliance
+	policy := monitoring.PolicyCompliance
+	fmt.Printf("  Policy Compliance:\n")
+	fmt.Printf("    Overall Score: %.1f/100 (%s)\n", policy.OverallScore, policy.ComplianceLevel)
+	fmt.Printf("    Last Assessment: %s\n", policy.LastAssessment.Format("2006-01-02"))
+	fmt.Printf("    Next Assessment: %s\n", policy.NextAssessment.Format("2006-01-02"))
+
+	if len(policy.WhatsAppPolicies) > 0 {
+		fmt.Printf("    WhatsApp Policies (%d):\n", len(policy.WhatsAppPolicies))
+		for i, pol := range policy.WhatsAppPolicies {
+			fmt.Printf("      %d. %s (%s)\n", i+1, pol.PolicyName, pol.PolicyCategory)
+			fmt.Printf("         Status: %s | Score: %.1f/100\n", pol.ComplianceStatus, pol.ComplianceScore)
+			if len(pol.Violations) > 0 {
+				fmt.Printf("         Violations: %d\n", len(pol.Violations))
+				for j, violation := range pol.Violations {
+					fmt.Printf("           %d. %s (%s severity)\n", j+1, violation.ViolationType, violation.Severity)
+					fmt.Printf("              %s\n", violation.Description)
+					fmt.Printf("              Affected Messages: %d | Status: %s\n",
+						violation.AffectedMessages, violation.Status)
+				}
+			}
+			if len(pol.Requirements) > 0 {
+				fmt.Printf("         Requirements: %d\n", len(pol.Requirements))
+				for j, req := range pol.Requirements {
+					status := "✓"
+					if req.Status != "MET" {
+						status = "✗"
+					}
+					fmt.Printf("           %s %d. %s (%.1f%%)\n", status, j+1, req.Description, req.ComplianceLevel)
+				}
+			}
+		}
+	}
+
+	if len(policy.BusinessPolicies) > 0 {
+		fmt.Printf("    Business Policies (%d):\n", len(policy.BusinessPolicies))
+		for i, pol := range policy.BusinessPolicies {
+			fmt.Printf("      %d. %s: %s (%.1f/100)\n", i+1, pol.PolicyName, pol.ComplianceStatus, pol.ComplianceScore)
+		}
+	}
+
+	// Regulatory compliance
+	regulatory := monitoring.RegulatoryCompliance
+	fmt.Printf("  Regulatory Compliance:\n")
+	fmt.Printf("    Overall Score: %.1f/100 (%s)\n", regulatory.OverallScore, regulatory.ComplianceLevel)
+	fmt.Printf("    Last Audit: %s\n", regulatory.LastAudit.Format("2006-01-02"))
+	fmt.Printf("    Next Audit: %s\n", regulatory.NextAudit.Format("2006-01-02"))
+
+	if len(regulatory.Jurisdictions) > 0 {
+		fmt.Printf("    Jurisdictions (%d):\n", len(regulatory.Jurisdictions))
+		for i, jurisdiction := range regulatory.Jurisdictions {
+			fmt.Printf("      %d. %s (%s)\n", i+1, jurisdiction.Country, jurisdiction.Region)
+			fmt.Printf("         Score: %.1f/100 | Status: %s\n", jurisdiction.ComplianceScore, jurisdiction.Status)
+			if len(jurisdiction.Regulations) > 0 {
+				fmt.Printf("         Regulations: %d\n", len(jurisdiction.Regulations))
+				for j, reg := range jurisdiction.Regulations {
+					fmt.Printf("           %d. %s: %.1f/100 (%s)\n",
+						j+1, reg.RegulationName, reg.ComplianceScore, reg.Status)
+				}
+			}
+		}
+	}
+
+	// Data protection
+	dataProtection := regulatory.DataProtection
+	fmt.Printf("    Data Protection:\n")
+	fmt.Printf("      GDPR: %.1f/100 (%s)\n",
+		dataProtection.GDPRCompliance.ComplianceScore, dataProtection.GDPRCompliance.Status)
+
+	// Quality compliance
+	quality := monitoring.QualityCompliance
+	fmt.Printf("  Quality Compliance:\n")
+	fmt.Printf("    Overall Score: %.1f/100 (%s)\n", quality.OverallScore, quality.ComplianceLevel)
+
+	msgQuality := quality.MessageQuality
+	fmt.Printf("    Message Quality:\n")
+	fmt.Printf("      Content Quality: %.1f/100\n", msgQuality.ContentQualityScore)
+	fmt.Printf("      Spam Score: %.1f (lower is better)\n", msgQuality.SpamScore)
+	fmt.Printf("      Violations: %d\n", msgQuality.ViolationCount)
+	fmt.Printf("      Template Compliance: %.1f%% (%d approved, %d rejected, %d pending)\n",
+		msgQuality.TemplateCompliance.ComplianceRate,
+		msgQuality.TemplateCompliance.ApprovedTemplates,
+		msgQuality.TemplateCompliance.RejectedTemplates,
+		msgQuality.TemplateCompliance.PendingTemplates)
+
+	deliveryQuality := quality.DeliveryQuality
+	fmt.Printf("    Delivery Quality:\n")
+	fmt.Printf("      Delivery Rate: %.1f%% (threshold: %.1f%%)\n",
+		deliveryQuality.DeliveryRate, deliveryQuality.QualityThreshold)
+	fmt.Printf("      Status: %s\n", deliveryQuality.ComplianceStatus)
+
+	engagementQuality := quality.EngagementQuality
+	fmt.Printf("    Engagement Quality:\n")
+	fmt.Printf("      Engagement Rate: %.1f%% | Response Rate: %.1f%%\n",
+		engagementQuality.EngagementRate, engagementQuality.ResponseRate)
+	fmt.Printf("      Opt-out Rate: %.1f%% | Status: %s\n",
+		engagementQuality.OptOutRate, engagementQuality.ComplianceStatus)
+
+	// Compliance alerts
+	if len(monitoring.ComplianceAlerts) > 0 {
+		fmt.Printf("  Active Compliance Alerts (%d):\n", len(monitoring.ComplianceAlerts))
+		for i, alert := range monitoring.ComplianceAlerts {
+			fmt.Printf("    %d. [%s] %s\n", i+1, alert.Severity, alert.Title)
+			fmt.Printf("       Type: %s | Category: %s | Status: %s\n",
+				alert.AlertType, alert.Category, alert.Status)
+			fmt.Printf("       Description: %s\n", alert.Description)
+			fmt.Printf("       Created: %s | Updated: %s\n",
+				alert.CreatedAt.Format("2006-01-02"), alert.UpdatedAt.Format("2006-01-02"))
+			if alert.DueDate != nil {
+				fmt.Printf("       Due Date: %s\n", alert.DueDate.Format("2006-01-02"))
+			}
+			if len(alert.Actions) > 0 {
+				fmt.Printf("       Actions: %d\n", len(alert.Actions))
+				for j, action := range alert.Actions {
+					fmt.Printf("         %d. %s (%s priority, %s)\n",
+						j+1, action.Title, action.Priority, action.Status)
+				}
+			}
+			fmt.Println()
+		}
 	}
 
 	return nil
