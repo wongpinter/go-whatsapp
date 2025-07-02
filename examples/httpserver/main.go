@@ -83,7 +83,7 @@ func main() {
 	// Setup logger
 	logger := zerolog.New(zerolog.NewConsoleWriter()).With().Timestamp().Logger()
 
-	fmt.Println("=== WhatsApp HTTP Server Framework Examples ===\n")
+	fmt.Println("=== WhatsApp HTTP Server Framework Examples ===")
 
 	// Example 1: Standard net/http server
 	fmt.Println("1. Standard net/http Server Example")
