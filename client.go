@@ -11,6 +11,9 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog"
 	"golang.org/x/time/rate"
+
+	"github.com/wongpinter/go-whatsapp/internal/config"
+	"github.com/wongpinter/go-whatsapp/internal/httpclient"
 )
 
 // HTTPClient interface allows for dependency injection and testing.
@@ -35,6 +38,7 @@ type Client struct {
 	WABAID        string
 	APIVersion    string
 	rateLimiter   *rate.Limiter
+	httpManager   *httpclient.Manager
 }
 
 // Option is a functional option for configuring the Client.
@@ -64,14 +68,24 @@ func NewClient(phoneNumberID, accessToken string, opts ...Option) (*Client, erro
 		opt(c)
 	}
 
-	// Initialize Resty client after all options are applied
-	c.restyClient = resty.New().
-		SetBaseURL(fmt.Sprintf("https://graph.facebook.com/%s", c.APIVersion)).
-		SetAuthToken(c.AccessToken).
-		SetHeader("Content-Type", "application/json").
-		SetRetryCount(3).
-		SetRetryWaitTime(1 * time.Second).
-		SetRetryMaxWaitTime(10 * time.Second)
+	// Initialize HTTP client manager
+	cfg := config.DefaultConfig()
+	c.httpManager = httpclient.NewManager(cfg, &nopLogger)
+
+	// Create HTTP client configuration
+	clientConfig := &httpclient.ClientConfig{
+		AccessToken: c.AccessToken,
+		APIVersion:  c.APIVersion,
+		RateLimiter: c.rateLimiter,
+		Logger:      &nopLogger,
+	}
+
+	// Get or create the HTTP client
+	var err error
+	c.restyClient, err = c.httpManager.GetOrCreateClient(httpclient.CloudAPIClient, clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP client: %w", err)
+	}
 
 	// Set up error handling
 	c.restyClient.OnAfterResponse(c.handleResponse)
@@ -104,8 +118,10 @@ func WithWABAID(wabaID string) Option {
 // Note: This should be called before the client is fully initialized
 func WithHTTPClient(httpClient HTTPClient) Option {
 	return func(c *Client) {
-		// For now, we'll skip custom HTTP client support
-		// This can be implemented later using resty.NewWithClient()
+		// Create a custom Resty client with the provided HTTP client
+		if stdHTTPClient, ok := httpClient.(*http.Client); ok {
+			c.restyClient = resty.NewWithClient(stdHTTPClient)
+		}
 	}
 }
 
