@@ -17,6 +17,9 @@
 # Go workspace file
 go.work
 
+# Configuration and secrets
+.roo/
+
 # IDE and editor files
 .vscode/
 .idea/
