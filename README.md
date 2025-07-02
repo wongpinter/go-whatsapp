@@ -12,7 +12,6 @@ A comprehensive Go library for the WhatsApp Business Cloud API. Send messages, h
 * 🔒 **Security Built-in** - Webhook signature verification, secure token handling
 * 🏗️ **Framework Agnostic** - Works with Gin, Echo, standard HTTP, and more
 * 📝 **Type Safe** - Full type definitions with comprehensive error handling
-* ⚡ **Production Ready** - Rate limiting, retries, structured logging
 * 🧪 **Testable** - Interface-based design for easy mocking
 
 ## 🚀 Quick Start
