@@ -1,6 +1,7 @@
 package bm
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -121,6 +122,199 @@ type TemplateButton struct {
 type TemplateParameter struct {
 	Type string `json:"type"`
 	Text string `json:"text,omitempty"`
+}
+
+// CreateTemplateRequest represents a request to create a new message template.
+type CreateTemplateRequest struct {
+	Name                string              `json:"name"`
+	Language            string              `json:"language"`
+	Category            TemplateCategory    `json:"category"`
+	AllowCategoryChange bool                `json:"allow_category_change,omitempty"`
+	Components          []TemplateComponent `json:"components"`
+}
+
+// UpdateTemplateRequest represents a request to update an existing template.
+type UpdateTemplateRequest struct {
+	Category   *TemplateCategory   `json:"category,omitempty"`
+	Components []TemplateComponent `json:"components,omitempty"`
+}
+
+// CreateTemplateResponse represents the response from creating a template.
+type CreateTemplateResponse struct {
+	ID       string           `json:"id"`
+	Status   TemplateStatus   `json:"status"`
+	Category TemplateCategory `json:"category"`
+}
+
+// ListTemplatesResponse represents the response from listing templates.
+type ListTemplatesResponse struct {
+	Data   []MessageTemplate `json:"data"`
+	Paging *PagingInfo       `json:"paging,omitempty"`
+}
+
+// PagingInfo represents pagination information.
+type PagingInfo struct {
+	Cursors *struct {
+		Before string `json:"before,omitempty"`
+		After  string `json:"after,omitempty"`
+	} `json:"cursors,omitempty"`
+	Next     string `json:"next,omitempty"`
+	Previous string `json:"previous,omitempty"`
+}
+
+// DeleteTemplateResponse represents the response from deleting a template.
+type DeleteTemplateResponse struct {
+	Success bool `json:"success"`
+}
+
+// TemplateComponentType represents the type of a template component.
+type TemplateComponentType string
+
+const (
+	ComponentTypeHeader  TemplateComponentType = "HEADER"
+	ComponentTypeBody    TemplateComponentType = "BODY"
+	ComponentTypeFooter  TemplateComponentType = "FOOTER"
+	ComponentTypeButtons TemplateComponentType = "BUTTONS"
+)
+
+// TemplateFormat represents the format of a template component.
+type TemplateFormat string
+
+const (
+	FormatText     TemplateFormat = "TEXT"
+	FormatImage    TemplateFormat = "IMAGE"
+	FormatVideo    TemplateFormat = "VIDEO"
+	FormatDocument TemplateFormat = "DOCUMENT"
+	FormatLocation TemplateFormat = "LOCATION"
+)
+
+// TemplateButtonType represents the type of a template button.
+type TemplateButtonType string
+
+const (
+	ButtonTypeQuickReply  TemplateButtonType = "QUICK_REPLY"
+	ButtonTypeURL         TemplateButtonType = "URL"
+	ButtonTypePhoneNumber TemplateButtonType = "PHONE_NUMBER"
+)
+
+// TemplateParameterType represents the type of a template parameter.
+type TemplateParameterType string
+
+const (
+	ParameterTypeText     TemplateParameterType = "text"
+	ParameterTypeCurrency TemplateParameterType = "currency"
+	ParameterTypeDateTime TemplateParameterType = "date_time"
+	ParameterTypeImage    TemplateParameterType = "image"
+	ParameterTypeDocument TemplateParameterType = "document"
+	ParameterTypeVideo    TemplateParameterType = "video"
+)
+
+// TemplateValidationError represents a validation error for a template.
+type TemplateValidationError struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+	Code    string `json:"code"`
+}
+
+// Error implements the error interface.
+func (e *TemplateValidationError) Error() string {
+	return fmt.Sprintf("template validation error in field '%s': %s (code: %s)", e.Field, e.Message, e.Code)
+}
+
+// TemplateValidationResult represents the result of template validation.
+type TemplateValidationResult struct {
+	Valid  bool                      `json:"valid"`
+	Errors []TemplateValidationError `json:"errors,omitempty"`
+}
+
+// SendTemplateRequest represents a request to send a template message.
+type SendTemplateRequest struct {
+	To       string                 `json:"to"`
+	Template TemplateMessagePayload `json:"template"`
+}
+
+// TemplateMessagePayload represents the template payload for sending messages.
+type TemplateMessagePayload struct {
+	Name       string                   `json:"name"`
+	Language   TemplateLanguage         `json:"language"`
+	Components []TemplateComponentParam `json:"components,omitempty"`
+}
+
+// TemplateLanguage represents the language of a template.
+type TemplateLanguage struct {
+	Code string `json:"code"`
+}
+
+// TemplateComponentParam represents a component parameter when sending templates.
+type TemplateComponentParam struct {
+	Type       TemplateComponentType `json:"type"`
+	Parameters []TemplateParameter   `json:"parameters,omitempty"`
+	SubType    string                `json:"sub_type,omitempty"`
+	Index      int                   `json:"index,omitempty"`
+}
+
+// TemplateListParams represents parameters for listing templates.
+type TemplateListParams struct {
+	Fields   string `json:"fields,omitempty"`
+	Status   string `json:"status,omitempty"`
+	Category string `json:"category,omitempty"`
+	Language string `json:"language,omitempty"`
+	Limit    int    `json:"limit,omitempty"`
+	After    string `json:"after,omitempty"`
+	Before   string `json:"before,omitempty"`
+}
+
+// TemplateListOption is a functional option for listing templates.
+type TemplateListOption func(*TemplateListParams)
+
+// WithTemplateFields sets the fields to retrieve for templates.
+func WithTemplateFields(fields ...string) TemplateListOption {
+	return func(p *TemplateListParams) {
+		fieldsStr := ""
+		for i, field := range fields {
+			if i > 0 {
+				fieldsStr += ","
+			}
+			fieldsStr += field
+		}
+		p.Fields = fieldsStr
+	}
+}
+
+// WithTemplateStatus filters templates by status.
+func WithTemplateStatus(status TemplateStatus) TemplateListOption {
+	return func(p *TemplateListParams) {
+		p.Status = string(status)
+	}
+}
+
+// WithTemplateCategory filters templates by category.
+func WithTemplateCategory(category TemplateCategory) TemplateListOption {
+	return func(p *TemplateListParams) {
+		p.Category = string(category)
+	}
+}
+
+// WithTemplateLanguage filters templates by language.
+func WithTemplateLanguage(language string) TemplateListOption {
+	return func(p *TemplateListParams) {
+		p.Language = language
+	}
+}
+
+// WithTemplateLimit sets the maximum number of templates to retrieve.
+func WithTemplateLimit(limit int) TemplateListOption {
+	return func(p *TemplateListParams) {
+		p.Limit = limit
+	}
+}
+
+// WithTemplatePagination sets pagination cursors.
+func WithTemplatePagination(after, before string) TemplateListOption {
+	return func(p *TemplateListParams) {
+		p.After = after
+		p.Before = before
+	}
 }
 
 // ConversationAnalytics represents conversation analytics data.

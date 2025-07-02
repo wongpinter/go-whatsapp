@@ -277,6 +277,294 @@ func (c *Client) GetMessageMetrics(ctx context.Context, phoneNumberID string, st
 	return result.Data, nil
 }
 
+// Template Management Operations
+
+// CreateTemplate creates a new message template.
+func (c *Client) CreateTemplate(ctx context.Context, request *CreateTemplateRequest) (*CreateTemplateResponse, error) {
+	if c.wabaID == "" {
+		return nil, fmt.Errorf("WABA ID is required for template operations")
+	}
+
+	var result CreateTemplateResponse
+	var apiError whatsapp.APIError
+
+	c.logger.Info().
+		Str("template_name", request.Name).
+		Str("language", request.Language).
+		Str("category", string(request.Category)).
+		Msg("Creating message template")
+
+	resp, err := c.restyClient.R().
+		SetContext(ctx).
+		SetResult(&result).
+		SetError(&apiError).
+		SetBody(request).
+		Post(fmt.Sprintf("/%s/message_templates", c.wabaID))
+
+	if err != nil {
+		c.logger.Error().Err(err).Msg("Failed to create template")
+		return nil, fmt.Errorf("http request failed: %w", err)
+	}
+
+	if resp.IsError() {
+		c.logger.Error().
+			Interface("api_error", apiError).
+			Int("status_code", resp.StatusCode()).
+			Msg("WhatsApp API returned an error")
+		return nil, &apiError
+	}
+
+	c.logger.Info().
+		Str("template_id", result.ID).
+		Str("status", string(result.Status)).
+		Msg("Template created successfully")
+
+	return &result, nil
+}
+
+// ListTemplates retrieves a list of message templates.
+func (c *Client) ListTemplates(ctx context.Context, options ...TemplateListOption) (*ListTemplatesResponse, error) {
+	if c.wabaID == "" {
+		return nil, fmt.Errorf("WABA ID is required for template operations")
+	}
+
+	var result ListTemplatesResponse
+	var apiError whatsapp.APIError
+
+	// Build query parameters
+	req := c.restyClient.R().
+		SetContext(ctx).
+		SetResult(&result).
+		SetError(&apiError)
+
+	// Apply options
+	params := &TemplateListParams{
+		Fields: "id,name,status,category,language,components",
+		Limit:  50,
+	}
+	for _, opt := range options {
+		opt(params)
+	}
+
+	// Set query parameters
+	if params.Fields != "" {
+		req.SetQueryParam("fields", params.Fields)
+	}
+	if params.Status != "" {
+		req.SetQueryParam("status", params.Status)
+	}
+	if params.Category != "" {
+		req.SetQueryParam("category", params.Category)
+	}
+	if params.Language != "" {
+		req.SetQueryParam("language", params.Language)
+	}
+	if params.Limit > 0 {
+		req.SetQueryParam("limit", fmt.Sprintf("%d", params.Limit))
+	}
+	if params.After != "" {
+		req.SetQueryParam("after", params.After)
+	}
+	if params.Before != "" {
+		req.SetQueryParam("before", params.Before)
+	}
+
+	c.logger.Info().
+		Interface("params", params).
+		Msg("Listing message templates")
+
+	resp, err := req.Get(fmt.Sprintf("/%s/message_templates", c.wabaID))
+
+	if err != nil {
+		c.logger.Error().Err(err).Msg("Failed to list templates")
+		return nil, fmt.Errorf("http request failed: %w", err)
+	}
+
+	if resp.IsError() {
+		c.logger.Error().
+			Interface("api_error", apiError).
+			Int("status_code", resp.StatusCode()).
+			Msg("WhatsApp API returned an error")
+		return nil, &apiError
+	}
+
+	c.logger.Info().
+		Int("count", len(result.Data)).
+		Msg("Templates retrieved successfully")
+
+	return &result, nil
+}
+
+// GetTemplate retrieves a specific message template by ID.
+func (c *Client) GetTemplate(ctx context.Context, templateID string, fields ...string) (*MessageTemplate, error) {
+	if c.wabaID == "" {
+		return nil, fmt.Errorf("WABA ID is required for template operations")
+	}
+
+	var result MessageTemplate
+	var apiError whatsapp.APIError
+
+	req := c.restyClient.R().
+		SetContext(ctx).
+		SetResult(&result).
+		SetError(&apiError)
+
+	// Set fields if provided
+	if len(fields) > 0 {
+		fieldsStr := ""
+		for i, field := range fields {
+			if i > 0 {
+				fieldsStr += ","
+			}
+			fieldsStr += field
+		}
+		req.SetQueryParam("fields", fieldsStr)
+	}
+
+	c.logger.Info().
+		Str("template_id", templateID).
+		Msg("Getting message template")
+
+	resp, err := req.Get(fmt.Sprintf("/%s", templateID))
+
+	if err != nil {
+		c.logger.Error().Err(err).Msg("Failed to get template")
+		return nil, fmt.Errorf("http request failed: %w", err)
+	}
+
+	if resp.IsError() {
+		c.logger.Error().
+			Interface("api_error", apiError).
+			Int("status_code", resp.StatusCode()).
+			Msg("WhatsApp API returned an error")
+		return nil, &apiError
+	}
+
+	c.logger.Info().
+		Str("template_name", result.Name).
+		Str("status", result.Status).
+		Msg("Template retrieved successfully")
+
+	return &result, nil
+}
+
+// UpdateTemplate updates an existing message template.
+func (c *Client) UpdateTemplate(ctx context.Context, templateID string, request *UpdateTemplateRequest) error {
+	if c.wabaID == "" {
+		return fmt.Errorf("WABA ID is required for template operations")
+	}
+
+	var result map[string]interface{}
+	var apiError whatsapp.APIError
+
+	c.logger.Info().
+		Str("template_id", templateID).
+		Msg("Updating message template")
+
+	resp, err := c.restyClient.R().
+		SetContext(ctx).
+		SetResult(&result).
+		SetError(&apiError).
+		SetBody(request).
+		Post(fmt.Sprintf("/%s", templateID))
+
+	if err != nil {
+		c.logger.Error().Err(err).Msg("Failed to update template")
+		return fmt.Errorf("http request failed: %w", err)
+	}
+
+	if resp.IsError() {
+		c.logger.Error().
+			Interface("api_error", apiError).
+			Int("status_code", resp.StatusCode()).
+			Msg("WhatsApp API returned an error")
+		return &apiError
+	}
+
+	c.logger.Info().
+		Str("template_id", templateID).
+		Msg("Template updated successfully")
+
+	return nil
+}
+
+// DeleteTemplate deletes a message template.
+func (c *Client) DeleteTemplate(ctx context.Context, templateName string, templateID ...string) error {
+	if c.wabaID == "" {
+		return fmt.Errorf("WABA ID is required for template operations")
+	}
+
+	var result DeleteTemplateResponse
+	var apiError whatsapp.APIError
+
+	req := c.restyClient.R().
+		SetContext(ctx).
+		SetResult(&result).
+		SetError(&apiError).
+		SetQueryParam("name", templateName)
+
+	// If template ID is provided, include it for more specific deletion
+	if len(templateID) > 0 && templateID[0] != "" {
+		req.SetQueryParam("hsm_id", templateID[0])
+	}
+
+	c.logger.Info().
+		Str("template_name", templateName).
+		Msg("Deleting message template")
+
+	resp, err := req.Delete(fmt.Sprintf("/%s/message_templates", c.wabaID))
+
+	if err != nil {
+		c.logger.Error().Err(err).Msg("Failed to delete template")
+		return fmt.Errorf("http request failed: %w", err)
+	}
+
+	if resp.IsError() {
+		c.logger.Error().
+			Interface("api_error", apiError).
+			Int("status_code", resp.StatusCode()).
+			Msg("WhatsApp API returned an error")
+		return &apiError
+	}
+
+	c.logger.Info().
+		Str("template_name", templateName).
+		Bool("success", result.Success).
+		Msg("Template deleted successfully")
+
+	return nil
+}
+
+// DeleteTemplateByID deletes a message template by ID.
+func (c *Client) DeleteTemplateByID(ctx context.Context, templateID, templateName string) error {
+	return c.DeleteTemplate(ctx, templateName, templateID)
+}
+
+// GetTemplatesByStatus retrieves templates filtered by status.
+func (c *Client) GetTemplatesByStatus(ctx context.Context, status TemplateStatus) (*ListTemplatesResponse, error) {
+	return c.ListTemplates(ctx, WithTemplateStatus(status))
+}
+
+// GetTemplatesByCategory retrieves templates filtered by category.
+func (c *Client) GetTemplatesByCategory(ctx context.Context, category TemplateCategory) (*ListTemplatesResponse, error) {
+	return c.ListTemplates(ctx, WithTemplateCategory(category))
+}
+
+// GetApprovedTemplates retrieves all approved templates.
+func (c *Client) GetApprovedTemplates(ctx context.Context) (*ListTemplatesResponse, error) {
+	return c.GetTemplatesByStatus(ctx, TemplateStatusApproved)
+}
+
+// GetPendingTemplates retrieves all pending templates.
+func (c *Client) GetPendingTemplates(ctx context.Context) (*ListTemplatesResponse, error) {
+	return c.GetTemplatesByStatus(ctx, TemplateStatusPending)
+}
+
+// GetRejectedTemplates retrieves all rejected templates.
+func (c *Client) GetRejectedTemplates(ctx context.Context) (*ListTemplatesResponse, error) {
+	return c.GetTemplatesByStatus(ctx, TemplateStatusRejected)
+}
+
 // UpdateBusinessProfile updates the business profile for a phone number.
 func (c *Client) UpdateBusinessProfile(ctx context.Context, phoneNumberID string, profile *BusinessProfileUpdateRequest) error {
 	var apiError whatsapp.APIError

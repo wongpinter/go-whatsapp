@@ -292,6 +292,88 @@ cloudClient.SendFlow(ctx, userPhoneNumber, "Please take our survey", flowID, flo
 
 ### Business Management Package
 
+The `bm` package provides comprehensive WhatsApp Business Management API support with a focus on message template management:
+
+```go
+import "github.com/wongpinter/go-whatsapp/bm"
+
+// Initialize Business Management client
+bmClient := bm.NewClient(wabaID, accessToken)
+
+// Create a marketing template with fluent builder API
+template := bm.NewMarketingTemplate(
+    "summer_sale_2024",
+    "en_US",
+    "🌞 Summer Sale Alert!",
+    "Hi {{1}}, enjoy {{2}} off on all summer items! Valid until {{3}}.",
+    "Terms and conditions apply",
+).WithCategoryChange(true)
+
+// Add buttons using builder pattern
+buttons := bm.NewButtons().
+    AddURL("Shop Now", "https://example.com/summer-sale").
+    AddQuickReply("Not Interested").
+    Build()
+
+template.AddButtons(buttons...)
+
+// Add examples for template variables
+template = bm.NewTemplate("summer_sale_2024", "en_US", bm.CategoryMarketing).
+    AddHeaderWithExample(bm.FormatText, "🌞 Summer Sale Alert!", nil).
+    AddBodyWithExample(
+        "Hi {{1}}, enjoy {{2}} off on all summer items! Valid until {{3}}.",
+        [][]string{{"John", "20%", "August 31st"}},
+    ).
+    AddFooter("Terms and conditions apply").
+    AddButtons(buttons...)
+
+// Validate template before submission
+if result := template.Validate(); !result.Valid {
+    for _, err := range result.Errors {
+        fmt.Printf("Validation error: %s\n", err.Message)
+    }
+}
+
+// Create template via Business Management API
+response, err := bmClient.CreateTemplate(ctx, template.Build())
+if err != nil {
+    log.Fatal(err)
+}
+
+// List and manage templates
+templates, err := bmClient.ListTemplates(ctx,
+    bm.WithTemplateStatus(bm.TemplateStatusApproved),
+    bm.WithTemplateCategory(bm.CategoryMarketing),
+    bm.WithTemplateLimit(50),
+)
+
+// Send approved templates via CloudAPI
+cloudClient := cloudapi.NewClient(phoneNumberID, accessToken)
+_, err = cloudClient.SendTemplateWithParams(ctx, userPhone, "summer_sale_2024", "en_US",
+    "John Doe", "20%", "August 31st")
+```
+
+**Key Features:**
+* **Template Builder API**: Fluent interface for creating message templates
+* **Complete Template Management**: CRUD operations via Business Management API
+* **Template Validation**: Comprehensive validation with detailed error reporting
+* **Component Support**: Headers, body, footer, buttons with all parameter types
+* **Template Categories**: Marketing, Utility, and Authentication templates
+* **Button Builder**: Support for quick reply, URL, and phone number buttons
+* **Convenience Functions**: Pre-built templates for common use cases
+* **CloudAPI Integration**: Seamless template sending with parameter substitution
+
+**Supported Template Components:**
+* Text headers with placeholders (max 1 variable)
+* Media headers (image, video, document)
+* Body text with unlimited variables and examples
+* Footer text (no variables allowed)
+* Interactive buttons (quick reply, URL, phone number)
+* Currency and date/time parameters
+* Dynamic URL buttons with variables
+
+### Business Management Package
+
 The `bm` package manages WhatsApp Business Account resources:
 
 ```go

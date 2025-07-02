@@ -241,6 +241,139 @@ func (c *Client) SendLocation(ctx context.Context, to string, latitude, longitud
 	return c.Send(ctx, msg)
 }
 
+// Extended Template Message Methods
+
+// SendTemplateWithComponents sends a template message using the Business Management API template structure.
+func (c *Client) SendTemplateWithComponents(ctx context.Context, to, templateName, languageCode string, components ...TemplateComponent) (*SendMessageResponse, error) {
+	msg := NewTemplateMessage(to, templateName, languageCode)
+
+	// Add components if provided
+	if len(components) > 0 {
+		msg.Template.Components = components
+	}
+
+	return c.Send(ctx, msg)
+}
+
+// SendTemplateWithAdvancedParams sends a template message with text parameters.
+func (c *Client) SendTemplateWithAdvancedParams(ctx context.Context, to, templateName, languageCode string, params ...string) (*SendMessageResponse, error) {
+	msg := NewTemplateMessage(to, templateName, languageCode)
+
+	// Add text parameters to body component
+	if len(params) > 0 {
+		var templateParams []TemplateParameter
+		for _, param := range params {
+			templateParams = append(templateParams, TemplateParameter{
+				Type: "text",
+				Text: param,
+			})
+		}
+
+		msg.Template.Components = append(msg.Template.Components, TemplateComponent{
+			Type:       "body",
+			Parameters: templateParams,
+		})
+	}
+
+	return c.Send(ctx, msg)
+}
+
+// SendTemplateWithHeaderImage sends a template message with a header image.
+func (c *Client) SendTemplateWithHeaderImage(ctx context.Context, to, templateName, languageCode, imageURL string, bodyParams ...string) (*SendMessageResponse, error) {
+	msg := NewTemplateMessage(to, templateName, languageCode)
+
+	// Add header image component
+	msg.Template.Components = append(msg.Template.Components, TemplateComponent{
+		Type: "header",
+		Parameters: []TemplateParameter{
+			{
+				Type: "image",
+				Image: &Media{
+					Link: imageURL,
+				},
+			},
+		},
+	})
+
+	// Add body parameters if provided
+	if len(bodyParams) > 0 {
+		var templateParams []TemplateParameter
+		for _, param := range bodyParams {
+			templateParams = append(templateParams, TemplateParameter{
+				Type: "text",
+				Text: param,
+			})
+		}
+
+		msg.Template.Components = append(msg.Template.Components, TemplateComponent{
+			Type:       "body",
+			Parameters: templateParams,
+		})
+	}
+
+	return c.Send(ctx, msg)
+}
+
+// SendTemplateWithCurrency sends a template message with currency parameters.
+func (c *Client) SendTemplateWithCurrency(ctx context.Context, to, templateName, languageCode string, amount1000 int, currencyCode, fallbackValue string, additionalParams ...string) (*SendMessageResponse, error) {
+	msg := NewTemplateMessage(to, templateName, languageCode)
+
+	// Build parameters array starting with currency
+	var templateParams []TemplateParameter
+	templateParams = append(templateParams, TemplateParameter{
+		Type: "currency",
+		Currency: &Currency{
+			Amount1000:    amount1000,
+			Code:          currencyCode,
+			FallbackValue: fallbackValue,
+		},
+	})
+
+	// Add additional text parameters
+	for _, param := range additionalParams {
+		templateParams = append(templateParams, TemplateParameter{
+			Type: "text",
+			Text: param,
+		})
+	}
+
+	msg.Template.Components = append(msg.Template.Components, TemplateComponent{
+		Type:       "body",
+		Parameters: templateParams,
+	})
+
+	return c.Send(ctx, msg)
+}
+
+// SendTemplateWithDateTime sends a template message with date/time parameters.
+func (c *Client) SendTemplateWithDateTime(ctx context.Context, to, templateName, languageCode, fallbackValue string, additionalParams ...string) (*SendMessageResponse, error) {
+	msg := NewTemplateMessage(to, templateName, languageCode)
+
+	// Build parameters array starting with date/time
+	var templateParams []TemplateParameter
+	templateParams = append(templateParams, TemplateParameter{
+		Type: "date_time",
+		DateTime: &DateTime{
+			FallbackValue: fallbackValue,
+		},
+	})
+
+	// Add additional text parameters
+	for _, param := range additionalParams {
+		templateParams = append(templateParams, TemplateParameter{
+			Type: "text",
+			Text: param,
+		})
+	}
+
+	msg.Template.Components = append(msg.Template.Components, TemplateComponent{
+		Type:       "body",
+		Parameters: templateParams,
+	})
+
+	return c.Send(ctx, msg)
+}
+
 // handleResponse processes HTTP responses and converts API errors.
 func (c *Client) handleResponse(client *resty.Client, resp *resty.Response) error {
 	if resp.IsError() {
