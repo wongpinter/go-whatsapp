@@ -1,0 +1,334 @@
+# WhatsApp Go Library - Configuration Schema
+# This YAML file provides structured configuration information for AI agents and automation tools
+
+metadata:
+  name: go-whatsapp
+  version: "1.0.0"
+  language: Go
+  license: MIT
+  repository: github.com/wongpinter/go-whatsapp
+  description: Comprehensive Go library for WhatsApp Business Cloud API integration
+  last_updated: "2025-07-02"
+  go_version_min: "1.19"
+
+# Package structure and import paths
+packages:
+  cloudapi:
+    import_path: github.com/wongpinter/go-whatsapp/cloudapi
+    purpose: Message sending functionality
+    main_client: Client
+    constructor: NewClient(phoneNumberID, accessToken string, options ...ClientOption) *Client
+    
+  webhook:
+    import_path: github.com/wongpinter/go-whatsapp/webhook
+    purpose: Webhook handling and event processing
+    main_handler: Handler
+    constructor: NewHandler(verifyToken, appSecret string, logger *zerolog.Logger) *Handler
+    
+  flows:
+    import_path: github.com/wongpinter/go-whatsapp/flows
+    purpose: WhatsApp Flows builder and management
+    main_builder: FlowBuilder
+    constructor: NewFlowBuilder() *FlowBuilder
+    
+  bm:
+    import_path: github.com/wongpinter/go-whatsapp/bm
+    purpose: Business Management API
+    main_client: Client
+    constructor: NewClient(wabaID, accessToken string, options ...ClientOption) *Client
+
+# Quick start patterns for code generation
+quick_start:
+  send_text_message: |
+    import "github.com/wongpinter/go-whatsapp/cloudapi"
+    
+    client := cloudapi.NewClient("PHONE_NUMBER_ID", "ACCESS_TOKEN")
+    resp, err := client.SendText(context.Background(), "+1234567890", "Hello World!")
+    
+  setup_webhook: |
+    import "github.com/wongpinter/go-whatsapp/webhook"
+    
+    handler := webhook.NewHandler("VERIFY_TOKEN", "APP_SECRET", logger)
+    handler.SetMessageHandler(&MyHandler{})
+    http.HandleFunc("/webhook", handler.ServeHTTP)
+    
+  build_flow: |
+    import "github.com/wongpinter/go-whatsapp/flows"
+    
+    flow := flows.NewFlowBuilder().
+        SetVersion("3.0").
+        AddScreen("contact_form").
+            SetTitle("Contact Information").
+            AddTextInput("name", "Full Name").SetRequired(true).Done().
+            AddEmailInput("email", "Email").SetRequired(true).Done().
+            SetTerminal(true).
+            Done().
+        Build()
+        
+  create_template: |
+    import "github.com/wongpinter/go-whatsapp/bm"
+    
+    template := bm.NewTemplateBuilder().
+        SetName("order_confirmation").
+        SetCategory(bm.CategoryUtility).
+        SetLanguage("en_US").
+        AddComponent(bm.NewBodyComponent().SetText("Order {{1}} confirmed")).
+        Build()
+
+# API method signatures for code generation
+api_methods:
+  cloudapi:
+    send_text:
+      signature: SendText(ctx context.Context, to, text string) (*MessageResponse, error)
+      description: Send text message
+      example: client.SendText(ctx, "+1234567890", "Hello World!")
+      
+    send_image:
+      signature: SendImage(ctx context.Context, to, mediaURL, caption string) (*MessageResponse, error)
+      description: Send image message
+      example: client.SendImage(ctx, "+1234567890", "https://example.com/image.jpg", "Caption")
+      
+    send_template:
+      signature: SendTemplate(ctx context.Context, to, templateName, languageCode string) (*MessageResponse, error)
+      description: Send template message
+      example: client.SendTemplate(ctx, "+1234567890", "hello_world", "en_US")
+      
+    send_flow:
+      signature: SendFlow(ctx context.Context, to, text, flowID, flowToken, buttonText string) (*MessageResponse, error)
+      description: Send Flow message
+      example: client.SendFlow(ctx, "+1234567890", "Please fill out this form", flowID, token, "Start")
+
+  webhook:
+    set_message_handler:
+      signature: SetMessageHandler(handler MessageHandler) *Handler
+      description: Set message event handler
+      example: handler.SetMessageHandler(&MyHandler{})
+      
+    set_status_handler:
+      signature: SetStatusHandler(handler StatusHandler) *Handler
+      description: Set status update handler
+      example: handler.SetStatusHandler(&MyStatusHandler{})
+
+  flows:
+    set_version:
+      signature: SetVersion(version string) *FlowBuilder
+      description: Set Flow version
+      example: builder.SetVersion("3.0")
+      
+    add_screen:
+      signature: AddScreen(id string) *ScreenBuilder
+      description: Add screen to Flow
+      example: builder.AddScreen("contact_form")
+      
+    create_flow:
+      signature: CreateFlow(ctx context.Context, req CreateFlowRequest) (*CreateFlowResponse, error)
+      description: Create Flow via API
+      example: client.CreateFlow(ctx, createRequest)
+
+  bm:
+    create_template:
+      signature: CreateTemplate(ctx context.Context, template *Template) (*CreateTemplateResponse, error)
+      description: Create message template
+      example: client.CreateTemplate(ctx, template)
+      
+    list_templates:
+      signature: ListTemplates(ctx context.Context, options ListTemplatesOptions) (*ListTemplatesResponse, error)
+      description: List templates
+      example: client.ListTemplates(ctx, options)
+
+# Configuration options for each package
+configuration:
+  cloudapi_options:
+    - name: WithLogger
+      signature: WithLogger(logger *zerolog.Logger) ClientOption
+      description: Set custom logger
+      
+    - name: WithRateLimiting
+      signature: WithRateLimiting(requestsPerSecond float64) ClientOption
+      description: Enable rate limiting
+      
+    - name: WithRetryConfig
+      signature: WithRetryConfig(maxRetries int, backoffDuration time.Duration) ClientOption
+      description: Configure retry behavior
+      
+    - name: WithHTTPClient
+      signature: WithHTTPClient(client *http.Client) ClientOption
+      description: Set custom HTTP client
+
+  webhook_options:
+    - name: SetMessageHandler
+      description: Set handler for message events
+      
+    - name: SetStatusHandler
+      description: Set handler for status updates
+      
+    - name: SetErrorHandler
+      description: Set custom error handler
+      
+    - name: Use
+      description: Add middleware to handler chain
+
+# Error handling patterns
+error_handling:
+  common_errors:
+    rate_limit:
+      code: 130429
+      description: Rate limit exceeded
+      retry: true
+      pattern: Exponential backoff
+      
+    api_limit:
+      code: 80007
+      description: API call limit exceeded
+      retry: true
+      pattern: Exponential backoff
+      
+    user_error:
+      code: 131000
+      description: Generic user error
+      retry: false
+      
+    undeliverable:
+      code: 131005
+      description: Message undeliverable
+      retry: false
+      
+    template_not_found:
+      code: 131014
+      description: Template not found
+      retry: false
+      action: Check template name/ID
+
+  error_checking:
+    - function: IsAPIError(err error) bool
+      description: Check if error is API error
+      
+    - function: IsRateLimitError(err error) bool
+      description: Check if error is rate limit
+      
+    - function: IsTemporaryError(err error) bool
+      description: Check if error is temporary
+
+# Framework integration configuration
+frameworks:
+  standard:
+    name: Standard HTTP
+    build_tag: null
+    import: net/http
+    native_type: "*http.ServeMux"
+    
+  gin:
+    name: Gin Web Framework
+    build_tag: gin
+    import: github.com/gin-gonic/gin
+    native_type: "*gin.Engine"
+    
+  echo:
+    name: Echo Web Framework
+    build_tag: echo
+    import: github.com/labstack/echo/v4
+    native_type: "*echo.Echo"
+
+# Build configuration
+build:
+  commands:
+    standard: go build
+    gin: go build -tags gin
+    echo: go build -tags echo
+    all_frameworks: go build -tags "gin echo"
+    
+  test_commands:
+    standard: go test ./...
+    gin: go test -tags gin ./...
+    echo: go test -tags echo ./...
+    all_frameworks: go test -tags "gin echo" ./...
+
+# Security configuration
+security:
+  webhook_verification:
+    algorithm: HMAC-SHA256
+    header: X-Hub-Signature-256
+    function: VerifySignature(payload []byte, signature, secret string) bool
+    
+  flow_tokens:
+    encryption: RSA
+    signing: RSA-PSS
+    default_ttl: 24h
+    generate_function: GenerateFlowToken(flowID, userID string, data map[string]interface{}) (string, error)
+    validate_function: ValidateFlowToken(token string, privateKey *rsa.PrivateKey) (*TokenPayload, error)
+
+# Rate limiting configuration
+rate_limiting:
+  whatsapp_limits:
+    api_calls_per_hour: "200-5000 (tier dependent)"
+    messages_per_second: "80-1000 (tier dependent)"
+    conversations_per_day: "1000-unlimited (tier dependent)"
+    
+  library_features:
+    built_in_limiting: true
+    exponential_backoff: true
+    automatic_retry: true
+    configurable_limits: true
+
+# Dependencies
+dependencies:
+  required:
+    - name: github.com/go-resty/resty/v2
+      purpose: HTTP client
+      
+    - name: github.com/rs/zerolog
+      purpose: Structured logging
+      
+  optional:
+    - name: github.com/gin-gonic/gin
+      purpose: Gin framework integration
+      build_tag: gin
+      
+    - name: github.com/labstack/echo/v4
+      purpose: Echo framework integration
+      build_tag: echo
+
+# Example directory structure
+examples:
+  basic:
+    - basic/: Simple usage examples
+    - cloudapi/: CloudAPI package examples
+    - webhook/: Webhook handling examples
+    - flows/: WhatsApp Flows examples
+    - templates/: Template management examples
+    
+  integration:
+    - gin-integration/: Gin framework integration
+    - echo-integration/: Echo framework integration
+    - comprehensive-test/: Multi-framework testing
+    
+  advanced:
+    - analytics/: Analytics and monitoring
+    - flows-integration/: Complete Flow implementation
+    - business-management/: Business account management
+
+# Common use cases and patterns
+use_cases:
+  customer_support:
+    description: Customer support bot with automated responses
+    components: [webhook, cloudapi]
+    
+  order_notifications:
+    description: Order confirmation and status updates
+    components: [bm, cloudapi, webhook]
+    
+  lead_generation:
+    description: Lead capture using WhatsApp Flows
+    components: [flows, cloudapi, webhook]
+    
+  marketing_campaigns:
+    description: Template-based marketing messages
+    components: [bm, cloudapi, webhook]
+
+# Performance considerations
+performance:
+  connection_pooling: Automatic with HTTP client manager
+  rate_limiting: Built-in with configurable limits
+  async_processing: Recommended for webhook handling
+  caching: Recommended for frequently accessed data
+  monitoring: Structured logging and metrics collection

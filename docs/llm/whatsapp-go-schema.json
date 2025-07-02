@@ -1,0 +1,381 @@
+{
+  "library": {
+    "name": "go-whatsapp",
+    "version": "1.0.0",
+    "language": "Go",
+    "license": "MIT",
+    "repository": "github.com/wongpinter/go-whatsapp",
+    "description": "Comprehensive Go library for WhatsApp Business Cloud API integration",
+    "last_updated": "2025-07-02"
+  },
+  "packages": {
+    "cloudapi": {
+      "purpose": "Message sending functionality",
+      "import_path": "github.com/wongpinter/go-whatsapp/cloudapi",
+      "main_types": [
+        {
+          "name": "Client",
+          "description": "Main client for sending messages",
+          "constructor": "NewClient(phoneNumberID, accessToken string, options ...ClientOption) *Client"
+        },
+        {
+          "name": "MessageResponse",
+          "description": "Response from message sending operations",
+          "methods": ["GetMessageID() string", "GetWhatsAppID() string"]
+        }
+      ],
+      "methods": [
+        {
+          "name": "SendText",
+          "signature": "SendText(ctx context.Context, to, text string) (*MessageResponse, error)",
+          "description": "Send text message",
+          "parameters": {
+            "ctx": "context.Context",
+            "to": "string (phone number)",
+            "text": "string (message content)"
+          }
+        },
+        {
+          "name": "SendImage",
+          "signature": "SendImage(ctx context.Context, to, mediaURL, caption string) (*MessageResponse, error)",
+          "description": "Send image message",
+          "parameters": {
+            "ctx": "context.Context",
+            "to": "string (phone number)",
+            "mediaURL": "string (image URL)",
+            "caption": "string (optional caption)"
+          }
+        },
+        {
+          "name": "SendTemplate",
+          "signature": "SendTemplate(ctx context.Context, to, templateName, languageCode string) (*MessageResponse, error)",
+          "description": "Send template message",
+          "parameters": {
+            "ctx": "context.Context",
+            "to": "string (phone number)",
+            "templateName": "string (template name)",
+            "languageCode": "string (language code)"
+          }
+        },
+        {
+          "name": "SendFlow",
+          "signature": "SendFlow(ctx context.Context, to, text, flowID, flowToken, buttonText string) (*MessageResponse, error)",
+          "description": "Send Flow message",
+          "parameters": {
+            "ctx": "context.Context",
+            "to": "string (phone number)",
+            "text": "string (message text)",
+            "flowID": "string (Flow ID)",
+            "flowToken": "string (Flow token)",
+            "buttonText": "string (button text)"
+          }
+        }
+      ],
+      "options": [
+        "WithLogger(logger *zerolog.Logger)",
+        "WithRateLimiting(requestsPerSecond float64)",
+        "WithRetryConfig(maxRetries int, backoffDuration time.Duration)",
+        "WithHTTPClient(client *http.Client)",
+        "WithAPIVersion(version string)"
+      ]
+    },
+    "webhook": {
+      "purpose": "Webhook handling and event processing",
+      "import_path": "github.com/wongpinter/go-whatsapp/webhook",
+      "main_types": [
+        {
+          "name": "Handler",
+          "description": "Main webhook handler",
+          "constructor": "NewHandler(verifyToken, appSecret string, logger *zerolog.Logger) *Handler"
+        },
+        {
+          "name": "Message",
+          "description": "Incoming message event",
+          "fields": ["ID", "From", "Timestamp", "Type", "Text", "Image", "Video", "Audio", "Document", "Location", "Contacts", "Interactive"]
+        },
+        {
+          "name": "Status",
+          "description": "Message status update",
+          "fields": ["ID", "Status", "Timestamp", "RecipientID", "Pricing", "Errors"]
+        }
+      ],
+      "interfaces": [
+        {
+          "name": "MessageHandler",
+          "methods": [
+            "OnTextMessage(ctx context.Context, msg *Message, metadata *Metadata) error",
+            "OnImageMessage(ctx context.Context, msg *Message, metadata *Metadata) error",
+            "OnVideoMessage(ctx context.Context, msg *Message, metadata *Metadata) error",
+            "OnAudioMessage(ctx context.Context, msg *Message, metadata *Metadata) error",
+            "OnDocumentMessage(ctx context.Context, msg *Message, metadata *Metadata) error",
+            "OnLocationMessage(ctx context.Context, msg *Message, metadata *Metadata) error",
+            "OnContactMessage(ctx context.Context, msg *Message, metadata *Metadata) error",
+            "OnInteractiveMessage(ctx context.Context, msg *Message, metadata *Metadata) error"
+          ]
+        },
+        {
+          "name": "StatusHandler",
+          "methods": [
+            "OnStatusUpdate(ctx context.Context, status *Status, metadata *Metadata) error"
+          ]
+        }
+      ],
+      "methods": [
+        {
+          "name": "SetMessageHandler",
+          "signature": "SetMessageHandler(handler MessageHandler) *Handler",
+          "description": "Set message event handler"
+        },
+        {
+          "name": "SetStatusHandler",
+          "signature": "SetStatusHandler(handler StatusHandler) *Handler",
+          "description": "Set status update handler"
+        },
+        {
+          "name": "ServeHTTP",
+          "signature": "ServeHTTP(w http.ResponseWriter, r *http.Request)",
+          "description": "HTTP handler for webhook endpoints"
+        }
+      ]
+    },
+    "flows": {
+      "purpose": "WhatsApp Flows builder and management",
+      "import_path": "github.com/wongpinter/go-whatsapp/flows",
+      "main_types": [
+        {
+          "name": "FlowBuilder",
+          "description": "Builder for creating Flows",
+          "constructor": "NewFlowBuilder() *FlowBuilder"
+        },
+        {
+          "name": "ScreenBuilder",
+          "description": "Builder for Flow screens",
+          "methods": ["SetTitle", "AddTextInput", "AddEmailInput", "AddDropdownInput", "SetTerminal", "Done"]
+        },
+        {
+          "name": "Client",
+          "description": "Client for Flow management",
+          "constructor": "NewClient(accessToken string) *Client"
+        }
+      ],
+      "methods": [
+        {
+          "name": "SetVersion",
+          "signature": "SetVersion(version string) *FlowBuilder",
+          "description": "Set Flow version"
+        },
+        {
+          "name": "AddScreen",
+          "signature": "AddScreen(id string) *ScreenBuilder",
+          "description": "Add screen to Flow"
+        },
+        {
+          "name": "Build",
+          "signature": "Build() *Flow",
+          "description": "Build the Flow"
+        },
+        {
+          "name": "CreateFlow",
+          "signature": "CreateFlow(ctx context.Context, req CreateFlowRequest) (*CreateFlowResponse, error)",
+          "description": "Create Flow via API"
+        },
+        {
+          "name": "PublishFlow",
+          "signature": "PublishFlow(ctx context.Context, flowID string) error",
+          "description": "Publish Flow"
+        }
+      ],
+      "components": [
+        "TextInput",
+        "EmailInput",
+        "PhoneInput",
+        "DropdownInput",
+        "RadioButtonsInput",
+        "CheckboxInput",
+        "DatePickerInput",
+        "TextHeading",
+        "Footer"
+      ]
+    },
+    "bm": {
+      "purpose": "Business Management API",
+      "import_path": "github.com/wongpinter/go-whatsapp/bm",
+      "main_types": [
+        {
+          "name": "Client",
+          "description": "Business Management client",
+          "constructor": "NewClient(wabaID, accessToken string, options ...ClientOption) *Client"
+        },
+        {
+          "name": "TemplateBuilder",
+          "description": "Builder for message templates",
+          "constructor": "NewTemplateBuilder() *TemplateBuilder"
+        },
+        {
+          "name": "Template",
+          "description": "Message template",
+          "fields": ["Name", "Category", "Language", "Components", "Status"]
+        }
+      ],
+      "methods": [
+        {
+          "name": "CreateTemplate",
+          "signature": "CreateTemplate(ctx context.Context, template *Template) (*CreateTemplateResponse, error)",
+          "description": "Create message template"
+        },
+        {
+          "name": "ListTemplates",
+          "signature": "ListTemplates(ctx context.Context, options ListTemplatesOptions) (*ListTemplatesResponse, error)",
+          "description": "List templates"
+        },
+        {
+          "name": "GetTemplate",
+          "signature": "GetTemplate(ctx context.Context, templateID string) (*Template, error)",
+          "description": "Get template by ID"
+        }
+      ],
+      "categories": [
+        "MARKETING",
+        "UTILITY",
+        "AUTHENTICATION"
+      ],
+      "components": [
+        "HeaderComponent",
+        "BodyComponent",
+        "FooterComponent",
+        "ButtonComponent"
+      ]
+    }
+  },
+  "error_handling": {
+    "error_types": [
+      {
+        "name": "APIError",
+        "description": "WhatsApp API error",
+        "fields": ["HTTPStatus", "ErrorCode", "Title", "Message", "Details"],
+        "methods": ["Error() string", "IsRateLimitError() bool", "IsTemporaryError() bool"]
+      },
+      {
+        "name": "ValidationError",
+        "description": "Input validation error",
+        "fields": ["Field", "Message", "Code"]
+      },
+      {
+        "name": "RateLimitError",
+        "description": "Rate limit exceeded error",
+        "fields": ["RetryAfter", "Limit", "Remaining"]
+      }
+    ],
+    "helper_functions": [
+      "IsAPIError(err error) bool",
+      "IsValidationError(err error) bool",
+      "IsRateLimitError(err error) bool",
+      "IsTemporaryError(err error) bool"
+    ],
+    "common_error_codes": {
+      "130429": "Rate limit exceeded",
+      "80007": "API call limit exceeded",
+      "131000": "Generic user error",
+      "131005": "Message undeliverable",
+      "131014": "Template not found",
+      "131016": "Template paused"
+    }
+  },
+  "framework_integration": {
+    "supported_frameworks": [
+      {
+        "name": "standard",
+        "description": "Standard net/http",
+        "build_tag": null,
+        "native_type": "*http.ServeMux"
+      },
+      {
+        "name": "gin",
+        "description": "Gin web framework",
+        "build_tag": "gin",
+        "native_type": "*gin.Engine"
+      },
+      {
+        "name": "echo",
+        "description": "Echo web framework",
+        "build_tag": "echo",
+        "native_type": "*echo.Echo"
+      }
+    ],
+    "interfaces": [
+      {
+        "name": "Router",
+        "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "Group", "Use"]
+      },
+      {
+        "name": "Server",
+        "methods": ["Router", "Start", "Shutdown", "Native"]
+      },
+      {
+        "name": "Context",
+        "methods": ["Request", "Response", "Param", "Query", "Header", "SetHeader", "JSON", "String", "Bind"]
+      }
+    ]
+  },
+  "security": {
+    "webhook_verification": {
+      "algorithm": "HMAC-SHA256",
+      "header": "X-Hub-Signature-256",
+      "function": "VerifySignature(payload []byte, signature, secret string) bool"
+    },
+    "flow_tokens": {
+      "encryption": "RSA",
+      "signing": "RSA-PSS",
+      "expiration": "24 hours default",
+      "functions": [
+        "GenerateFlowToken(flowID, userID string, data map[string]interface{}) (string, error)",
+        "ValidateFlowToken(token string, privateKey *rsa.PrivateKey) (*TokenPayload, error)"
+      ]
+    }
+  },
+  "rate_limiting": {
+    "whatsapp_limits": {
+      "api_calls": "200-5000 per hour (tier dependent)",
+      "throughput": "80-1000 messages per second (tier dependent)",
+      "conversations": "1000-unlimited per day (tier dependent)"
+    },
+    "library_features": [
+      "Built-in rate limiting with configurable limits",
+      "Exponential backoff retry for rate limit errors",
+      "Automatic retry for transient failures"
+    ]
+  },
+  "examples": {
+    "basic_usage": {
+      "send_text": "client.SendText(ctx, \"+1234567890\", \"Hello World!\")",
+      "setup_webhook": "handler := webhook.NewHandler(verifyToken, appSecret, logger)",
+      "build_flow": "flow := flows.NewFlowBuilder().SetVersion(\"3.0\").AddScreen(\"screen1\")",
+      "create_template": "template := bm.NewTemplateBuilder().SetName(\"order_confirmation\")"
+    },
+    "advanced_patterns": {
+      "retry_with_backoff": "Implement exponential backoff for rate limit errors",
+      "framework_integration": "Use HTTP server abstraction for framework independence",
+      "flow_data_exchange": "Handle Flow completion events with data processing",
+      "template_management": "Complete CRUD operations for message templates"
+    }
+  },
+  "testing": {
+    "test_commands": [
+      "go test ./...",
+      "go test -tags gin ./...",
+      "go test -tags echo ./...",
+      "go test -tags \"gin echo\" ./..."
+    ],
+    "mock_support": "Mock implementations available for testing without real frameworks"
+  },
+  "dependencies": {
+    "required": [
+      "github.com/go-resty/resty/v2",
+      "github.com/rs/zerolog"
+    ],
+    "optional": [
+      "github.com/gin-gonic/gin (for Gin integration)",
+      "github.com/labstack/echo/v4 (for Echo integration)"
+    ]
+  }
+}
